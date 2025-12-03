@@ -150,13 +150,8 @@ protected:
     // pass the ones from TrackPiece to match the signature.
     // --------------------------------------------------------
     void generateMesh() override {
-        mesh = createFlatBoard(
-            smoothedPath,
-            frameT,   // not used internally by your working createFlatBoard
-            frameR,
-            frameU,
-            trackRadius * 2.0f
-            );
+        auto board = createFlatBoardLocal(smoothedPath, trackRadius * 2.0f);
+        mesh = board.mesh;
     }
 };
 

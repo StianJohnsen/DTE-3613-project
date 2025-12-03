@@ -11,6 +11,13 @@
 #include "bulletDebugDrawer.h"
 
 
+struct MeshInstance {
+    Mesh mesh;
+    glm::mat4 model;
+};
+
+
+
 Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCount);
 
 Mesh createSkybox();
@@ -52,11 +59,8 @@ Mesh createTriangularPrism(float width, float height, float depth);
 Mesh createDebugBulletMesh(const std::vector<DebugLine>& lines);
 
 
-Mesh createFlatBoardLocal(
-    const std::vector<glm::vec3>& path,
-    const std::vector<glm::vec3>& T,
-    const std::vector<glm::vec3>& N,
-    const std::vector<glm::vec3>& B,
+MeshInstance createFlatBoardLocal(
+    const std::vector<glm::vec3>& pathWorld,
     float width);
 
 Mesh createDebugPathLine(const std::vector<glm::vec3>& path,

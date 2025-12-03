@@ -135,6 +135,14 @@ private:
                                    const glm::vec3& T);
 
 
+    void getFrameAtIndex(
+        const std::vector<glm::vec3> &path,
+        int i,
+        glm::vec3 &T,
+        glm::vec3 &R,
+        glm::vec3 &U);
+
+
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;

@@ -1,5 +1,6 @@
 #include "meshCreation.h"
 #include "processVertices.h"
+#include "renderer.h"
 
 Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCount){
 
@@ -72,16 +73,6 @@ Mesh createTrack(const std::vector<glm::vec3>& controllPoints, float width){
     return mesh;
 }
 
-
-// void createUVHalfpipe(
-//     const HermiteTrack& track,
-//     float radius,
-//     unsigned int pathResolution,
-//     unsigned int arcSegments,
-//     std::vector<float>& vertices,
-//     std::vector<unsigned int>& indices
-//     )
-
 Mesh createHalfpipe(const std::vector<glm::vec3>& controlPoints,float radius, unsigned int pathResolution, unsigned int arcSegments){
     Mesh mesh;
 
@@ -115,7 +106,6 @@ Mesh createHalfpipe(const std::vector<glm::vec3>& controlPoints,float radius, un
 
     return mesh;
 }
-
 
 Mesh mergeMeshes(const std::vector<Mesh>& meshes)
 {
@@ -155,10 +145,6 @@ Mesh mergeMeshes(const std::vector<Mesh>& meshes)
     result.setup();
     return result;
 }
-
-
-
-
 
 Mesh createLoopBoard(const std::vector<glm::vec3>& controlPoints, float width, unsigned int pathResolution) {
     Mesh mesh;
@@ -295,8 +281,6 @@ Mesh createLoopBoard(const std::vector<glm::vec3>& controlPoints, float width, u
     return mesh;
 }
 
-
-
 Mesh createWall(float width, float height, float thickness)
 {
     Mesh mesh;
@@ -391,8 +375,6 @@ Mesh createWall(float width, float height, float thickness)
     return mesh;
 }
 
-
-
 Mesh createEndWall(float width, float height, float thickness)
 {
     Mesh mesh;
@@ -477,168 +459,6 @@ Mesh createEndWall(float width, float height, float thickness)
     return mesh;
 }
 
-
-// THIS WORKS!!!
-// Mesh createWall(float width, float height, float thickness)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const float hw = width * 0.5f;
-//     const float hh = height;
-//     const float ht = thickness * 0.5f;
-
-
-//     float uFront  = width      / height;    // front/back faces
-//     float uSide   = thickness  / height;    // left/right faces
-//     float uTopBot = width      / thickness; // top/bottom faces (optional)
-
-
-//     const glm::vec3 color(0.9f, 0.1f, 0.1f);
-
-//     auto pushVert = [&](const glm::vec3& pos,
-//                         const glm::vec3& n,
-//                         float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             pos.x, pos.y, pos.z,
-//                                             n.x, n.y, n.z,
-//                                             u, v,
-//                                             color.r, color.g, color.b
-//                                         });
-//     };
-
-//     // 8 corners (axis-aligned cube)
-//     glm::vec3 p[8] = {
-//         {-hw, 0,  -ht}, // 0
-//         { hw, 0,  -ht}, // 1
-//         { hw, hh, -ht}, // 2
-//         {-hw, hh, -ht}, // 3
-
-//         {-hw, 0,   ht}, // 4
-//         { hw, 0,   ht}, // 5
-//         { hw, hh,  ht}, // 6
-//         {-hw, hh,  ht}  // 7
-//     };
-
-//     // Push faces with normals
-
-
-//     // FRONT (+Z)
-//     pushVert(p[4], glm::vec3(0,0,1), 0.0f, 0.0f);
-//     pushVert(p[5], glm::vec3(0,0,1), uFront, 0.0f);
-//     pushVert(p[6], glm::vec3(0,0,1), uFront, 1.0f);
-//     pushVert(p[7], glm::vec3(0,0,1), 0.0f, 1.0f);
-
-//     // BACK (-Z)
-//     pushVert(p[0], glm::vec3(0,0,-1), 0.0f, 0.0f);
-//     pushVert(p[1], glm::vec3(0,0,-1), uFront, 0.0f);
-//     pushVert(p[2], glm::vec3(0,0,-1), uFront, 1.0f);
-//     pushVert(p[3], glm::vec3(0,0,-1), 0.0f, 1.0f);
-
-//     // LEFT (-X)
-//     // depth = thickness → use uSide
-//     pushVert(p[0], glm::vec3(-1,0,0), 0.0f, 0.0f);
-//     pushVert(p[3], glm::vec3(-1,0,0), uSide, 0.0f);
-//     pushVert(p[7], glm::vec3(-1,0,0), uSide, 1.0f);
-//     pushVert(p[4], glm::vec3(-1,0,0), 0.0f, 1.0f);
-
-//     // RIGHT (+X)
-//     pushVert(p[1], glm::vec3(1,0,0), 0.0f, 0.0f);
-//     pushVert(p[2], glm::vec3(1,0,0), uSide, 0.0f);
-//     pushVert(p[6], glm::vec3(1,0,0), uSide, 1.0f);
-//     pushVert(p[5], glm::vec3(1,0,0), 0.0f, 1.0f);
-
-//     // TOP (+Y)
-//     // width vs thickness → use uTopBot
-//     pushVert(p[3], glm::vec3(0,1,0), 0.0f,       0.0f);
-//     pushVert(p[2], glm::vec3(0,1,0), uTopBot,    0.0f);
-//     pushVert(p[6], glm::vec3(0,1,0), uTopBot,    1.0f);
-//     pushVert(p[7], glm::vec3(0,1,0), 0.0f,       1.0f);
-
-//     // BOTTOM (-Y)
-//     pushVert(p[0], glm::vec3(0,-1,0), 0.0f,       0.0f);
-//     pushVert(p[1], glm::vec3(0,-1,0), uTopBot,    0.0f);
-//     pushVert(p[5], glm::vec3(0,-1,0), uTopBot,    1.0f);
-//     pushVert(p[4], glm::vec3(0,-1,0), 0.0f,       1.0f);
-
-
-//     // // Front (+Z) – map width → u, height → v
-//     // pushVert(p[4], glm::vec3(0,0,1), 0.0f, 0.0f); // bottom-left
-//     // pushVert(p[5], glm::vec3(0,0,1), 1.0f, 0.0f); // bottom-right
-//     // pushVert(p[6], glm::vec3(0,0,1), 1.0f, 1.0f); // top-right
-//     // pushVert(p[7], glm::vec3(0,0,1), 0.0f, 1.0f); // top-left
-
-//     // // Back (-Z)
-//     // pushVert(p[0], glm::vec3(0,0,-1), 0.0f, 0.0f);
-//     // pushVert(p[1], glm::vec3(0,0,-1), 1.0f, 0.0f);
-//     // pushVert(p[2], glm::vec3(0,0,-1), 1.0f, 1.0f);
-//     // pushVert(p[3], glm::vec3(0,0,-1), 0.0f, 1.0f);
-
-//     // // Left (-X) – depth vs height
-//     // pushVert(p[0], glm::vec3(-1,0,0), 0.0f, 0.0f);
-//     // pushVert(p[3], glm::vec3(-1,0,0), 1.0f, 0.0f);
-//     // pushVert(p[7], glm::vec3(-1,0,0), 1.0f, 1.0f);
-//     // pushVert(p[4], glm::vec3(-1,0,0), 0.0f, 1.0f);
-
-//     // // Right (+X)
-//     // pushVert(p[1], glm::vec3(1,0,0), 0.0f, 0.0f);
-//     // pushVert(p[2], glm::vec3(1,0,0), 1.0f, 0.0f);
-//     // pushVert(p[6], glm::vec3(1,0,0), 1.0f, 1.0f);
-//     // pushVert(p[5], glm::vec3(1,0,0), 0.0f, 1.0f);
-
-//     // // Top (+Y)
-//     // pushVert(p[3], glm::vec3(0,1,0), 0.0f, 0.0f);
-//     // pushVert(p[2], glm::vec3(0,1,0), 1.0f, 0.0f);
-//     // pushVert(p[6], glm::vec3(0,1,0), 1.0f, 1.0f);
-//     // pushVert(p[7], glm::vec3(0,1,0), 0.0f, 1.0f);
-
-//     // // Bottom (-Y)
-//     // pushVert(p[0], glm::vec3(0,-1,0), 0.0f, 0.0f);
-//     // pushVert(p[1], glm::vec3(0,-1,0), 1.0f, 0.0f);
-//     // pushVert(p[5], glm::vec3(0,-1,0), 1.0f, 1.0f);
-//     // pushVert(p[4], glm::vec3(0,-1,0), 0.0f, 1.0f);
-
-
-
-//     // // Front (+Z)
-//     // for (int idx : {4,5,6,7}) pushVert(p[idx], glm::vec3(0,0,1), 0,0);
-//     // // Back (-Z)
-//     // for (int idx : {0,1,2,3}) pushVert(p[idx], glm::vec3(0,0,-1), 0,0);
-//     // // Left (-X)
-//     // for (int idx : {0,3,7,4}) pushVert(p[idx], glm::vec3(-1,0,0), 0,0);
-//     // // Right (+X)
-//     // for (int idx : {1,2,6,5}) pushVert(p[idx], glm::vec3(1,0,0), 0,0);
-//     // // Top (+Y)
-//     // for (int idx : {3,2,6,7}) pushVert(p[idx], glm::vec3(0,1,0), 0,0);
-//     // // Bottom (-Y)
-//     // for (int idx : {0,1,5,4}) pushVert(p[idx], glm::vec3(0,-1,0), 0,0);
-
-//     // Indices (6 faces × 2 triangles × 3 indices)
-//     for (int face = 0; face < 6; ++face) {
-//         unsigned int base = face * 4;
-//         indices.insert(indices.end(), {
-//                                           base+0, base+1, base+2,
-//                                           base+2, base+3, base+0
-//                                       });
-//     }
-
-//     // Setup mesh
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//                        {1, 3, GL_FLOAT, GL_FALSE, stride, 3 * sizeof(float)},
-//                        {2, 2, GL_FLOAT, GL_FALSE, stride, 6 * sizeof(float)},
-//                        {3, 3, GL_FLOAT, GL_FALSE, stride, 8 * sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
 
 Mesh createCylinder(float radius, float height, int segments)
 {
@@ -749,8 +569,6 @@ Mesh createCylinder(float radius, float height, int segments)
     return mesh;
 }
 
-
-
 Mesh createPyramid(float baseSize, float height)
 {
     Mesh mesh;
@@ -813,81 +631,6 @@ Mesh createPyramid(float baseSize, float height)
     mesh.setup();
     return mesh;
 }
-
-
-// Mesh createPyramid(float baseSize, float height)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     const glm::vec3 color(0.9f, 0.6f, 0.1f);
-
-//     auto pushVert = [&](glm::vec3 pos, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             pos.x,pos.y,pos.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             color.r,color.g,color.b
-//                                         });
-//     };
-
-//     float h = height;
-//     float s = baseSize * 0.5f;
-
-//     glm::vec3 tip(0,h,0);
-
-//     glm::vec3 base[4] = {
-//         {-s,0,-s},
-//         { s,0,-s},
-//         { s,0, s},
-//         {-s,0, s}
-//     };
-
-//     // Base
-//     pushVert(base[0], {0,-1,0}, 0,0);
-//     pushVert(base[1], {0,-1,0}, 1,0);
-//     pushVert(base[2], {0,-1,0}, 1,1);
-//     pushVert(base[3], {0,-1,0}, 0,1);
-
-//     indices.insert(indices.end(), {0,1,2, 2,3,0});
-
-//     // 4 triangular faces
-//     for (int i = 0; i < 4; i++)
-//     {
-//         glm::vec3 a = base[i];
-//         glm::vec3 b = base[(i+1)%4];
-//         glm::vec3 c = tip;
-
-//         glm::vec3 n = glm::normalize(glm::cross(b-a, c-a));
-
-//         int baseIndex = vertices.size() / 11;
-
-//         pushVert(a,n,0,0);
-//         pushVert(b,n,1,0);
-//         pushVert(c,n,0.5,1);
-
-//         indices.push_back(baseIndex+0);
-//         indices.push_back(baseIndex+1);
-//         indices.push_back(baseIndex+2);
-//     }
-
-//     // Setup
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11*sizeof(float);
-//     mesh.attributes = {
-//         {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//         {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//         {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//         {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
 
 
 Mesh createTriangularPrism(float width, float height, float depth)
@@ -976,126 +719,6 @@ Mesh createTriangularPrism(float width, float height, float depth)
     return mesh;
 }
 
-
-// Mesh createTriangularPrism(float width, float height, float depth)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     const glm::vec3 color(0.2f, 0.8f, 0.3f);
-
-//     auto push = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(),
-//                         {p.x,p.y,p.z, n.x,n.y,n.z, u,v, color.r,color.g,color.b});
-//     };
-
-//     float w = width*0.5f;
-//     float d = depth*0.5f;
-//     float h = height;
-
-//     // 6 vertices
-//     glm::vec3 A(-w,0,-d);
-//     glm::vec3 B( w,0,-d);
-//     glm::vec3 C( 0,h,-d);
-
-//     glm::vec3 D(-w,0, d);
-//     glm::vec3 E( w,0, d);
-//     glm::vec3 F( 0,h, d);
-
-//     glm::vec3 pts[] = {A,B,C, D,E,F};
-//     glm::vec3 ns[] = { {0,0,-1}, {0,0,1}, {0,-1,0},
-//                       {1,0,0}, {-1,0,0} };
-
-
-//     // front triangle (A,B,C)
-//     push(A, ns[0], 0.0f, 0.0f);
-//     push(B, ns[0], 1.0f, 0.0f);
-//     push(C, ns[0], 0.5f, 1.0f);
-
-//     push(D, ns[1], 0.0f, 0.0f);
-//     push(E, ns[1], 1.0f, 0.0f);
-//     push(F, ns[1], 0.5f, 1.0f);
-
-
-//     push(A, ns[2], 0.0f, 0.0f);
-//     push(B, ns[2], 1.0f, 0.0f);
-//     push(E, ns[2], 1.0f, 1.0f);
-//     push(D, ns[2], 0.0f, 1.0f);
-
-
-//     push(B, ns[3], 0.0f, 0.0f);
-//     push(C, ns[3], 1.0f, 0.0f);
-//     push(F, ns[3], 1.0f, 1.0f);
-//     push(E, ns[3], 0.0f, 1.0f);
-
-
-//     push(A, ns[4], 0.0f, 0.0f);
-//     push(D, ns[4], 1.0f, 0.0f);
-//     push(F, ns[4], 1.0f, 1.0f);
-//     push(C, ns[4], 0.0f, 1.0f);
-
-
-//     // // front triangle
-//     // push(A,ns[0]); push(B,ns[0]); push(C,ns[0]);
-//     // // back triangle
-//     // push(D,ns[1]); push(E,ns[1]); push(F,ns[1]);
-
-//     // // bottom quad
-//     // push(A,ns[2]); push(B,ns[2]); push(E,ns[2]); push(D,ns[2]);
-
-//     // // right quad
-//     // push(B,ns[3]); push(C,ns[3]); push(F,ns[3]); push(E,ns[3]);
-
-//     // // left quad
-//     // push(A,ns[4]); push(D,ns[4]); push(F,ns[4]); push(C,ns[4]);
-
-//     // Indices
-//     auto quad = [&](int base)
-//     {
-//         indices.push_back(static_cast<unsigned int>(base));
-//         indices.push_back(static_cast<unsigned int>(base + 1));
-//         indices.push_back(static_cast<unsigned int>(base + 2));
-//         indices.push_back(static_cast<unsigned int>(base + 2));
-//         indices.push_back(static_cast<unsigned int>(base + 3));
-//         indices.push_back(static_cast<unsigned int>(base));
-//     };
-
-
-//     // Triangles
-//     indices.insert(indices.end(), {0,1,2});
-//     indices.insert(indices.end(), {3,4,5});
-
-//     // bottom
-//     quad(6);
-//     // right
-//     quad(10);
-//     // left
-//     quad(14);
-
-//     // Mesh setup
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11*sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-
-
-
-
-// meshCreation.h / .cpp (wherever you put it)
 
 Mesh createFlatBoard(
     const std::vector<glm::vec3>& path,
@@ -1304,1333 +927,6 @@ Mesh createFlatBoard(
 }
 
 
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& /*T*/,
-//     const std::vector<glm::vec3>& /*N*/,
-//     const std::vector<glm::vec3>& /*B*/,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     // Railing / board parameters
-//     float railingHeight    = 1.9f;
-//     float railingOffset    = 0.05f;
-//     float railingThickness = 0.04f;
-//     float boardThickness   = 0.05f;
-
-//     const glm::vec3 WHITE(1,1,1);
-
-//     auto pushVert = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x,p.y,p.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             WHITE.r,WHITE.g,WHITE.b
-//                                         });
-//     };
-
-//     // 1) Arc-length for v along the track
-//     std::vector<float> cumLen(Nsamples);
-//     float totalLen = 0.f;
-//     cumLen[0] = 0.f;
-//     for (size_t i = 1; i < Nsamples; ++i)
-//     {
-//         totalLen += glm::length(path[i] - path[i - 1]);
-//         cumLen[i] = totalLen;
-//     }
-//     if (totalLen < 1e-6f) totalLen = 1.0f;
-
-//     // 2) Build simple frames (T, R, U) from path only
-//     std::vector<glm::vec3> tangent(Nsamples);
-//     std::vector<glm::vec3> right(Nsamples);
-//     std::vector<glm::vec3> up(Nsamples);
-
-//     for (size_t i = 0; i < Nsamples; ++i)
-//     {
-//         glm::vec3 T;
-//         if (i == 0)
-//             T = path[1] - path[0];
-//         else if (i == Nsamples - 1)
-//             T = path[i] - path[i - 1];
-//         else
-//             T = path[i + 1] - path[i - 1];
-
-//         if (glm::length(T) < 1e-6f)
-//             T = glm::vec3(0,0,1);
-
-//         T = glm::normalize(T);
-
-//         glm::vec3 W(0,1,0);
-//         if (fabs(glm::dot(W, T)) > 0.9f)
-//             W = glm::vec3(1,0,0);
-
-//         glm::vec3 R = glm::normalize(glm::cross(W, T));
-//         glm::vec3 U = glm::normalize(glm::cross(T, R));
-
-//         tangent[i] = T;
-//         right[i]   = R;
-//         up[i]      = U;
-//     }
-
-//     // 3) Build vertices: **16 per sample**
-//     const unsigned int vertsPer = 16;
-
-//     for (size_t i = 0; i < Nsamples; ++i)
-//     {
-//         glm::vec3 center = path[i];
-//         glm::vec3 R      = right[i];
-//         glm::vec3 U      = up[i];
-
-//         glm::vec3 leftEdge  = center - R * halfW;
-//         glm::vec3 rightEdge = center + R * halfW;
-
-//         float vPath = cumLen[i] / totalLen;  // 0..1 along length
-
-//         // --- TOP (0,1) ---
-//         pushVert(leftEdge,  U, 0.0f, vPath);
-//         pushVert(rightEdge, U, 1.0f, vPath);
-
-//         // --- RAIL FRONT (2..5) ---
-//         glm::vec3 leftBase  = leftEdge  - R * railingOffset;
-//         glm::vec3 rightBase = rightEdge + R * railingOffset;
-//         glm::vec3 leftTop   = leftBase  + U * railingHeight;
-//         glm::vec3 rightTop  = rightBase + U * railingHeight;
-
-//         // U across width (0..1), V up railing (0..1)
-//         pushVert(leftBase,  U, 0.0f, 0.0f); // 2
-//         pushVert(leftTop,   U, 0.0f, 1.0f); // 3
-//         pushVert(rightBase, U, 1.0f, 0.0f); // 4
-//         pushVert(rightTop,  U, 1.0f, 1.0f); // 5
-
-//         // --- BOTTOM (6,7) ---
-//         glm::vec3 leftBot  = leftEdge  - U * boardThickness;
-//         glm::vec3 rightBot = rightEdge - U * boardThickness;
-
-//         pushVert(leftBot,  -U, 0.0f, vPath); // 6
-//         pushVert(rightBot, -U, 1.0f, vPath); // 7
-
-//         // --- RAIL BACK (8..11) ---
-//         glm::vec3 leftBaseB  = leftBase  + R * railingThickness;
-//         glm::vec3 leftTopB   = leftTop   + R * railingThickness;
-//         glm::vec3 rightBaseB = rightBase - R * railingThickness;
-//         glm::vec3 rightTopB  = rightTop  - R * railingThickness;
-
-//         pushVert(leftBaseB,  U, 0.0f, 0.0f); // 8
-//         pushVert(leftTopB,   U, 0.0f, 1.0f); // 9
-//         pushVert(rightBaseB, U, 1.0f, 0.0f); // 10
-//         pushVert(rightTopB,  U, 1.0f, 1.0f); // 11
-
-//         // --- SIDE WALLS (12..15) ---
-//         // U is 0 on left wall, 1 on right wall; V follows path
-//         pushVert(leftEdge,  -R, 0.0f, vPath); // 12
-//         pushVert(leftBot,   -R, 0.0f, vPath); // 13
-//         pushVert(rightEdge,  R, 1.0f, vPath); // 14
-//         pushVert(rightBot,   R, 1.0f, vPath); // 15
-//     }
-
-//     // 4) Indices (same layout as before)
-//     for (size_t i = 0; i < Nsamples - 1; ++i)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i + 1) * vertsPer;
-
-//         // top
-//         indices.insert(indices.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
-
-//         // bottom
-//         indices.insert(indices.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
-
-//         // walls
-//         indices.insert(indices.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
-//         indices.insert(indices.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
-
-//         // rail front
-//         indices.insert(indices.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
-//         indices.insert(indices.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
-
-//         // rail back
-//         indices.insert(indices.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
-//         indices.insert(indices.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
-
-//         // connectors (left)
-//         indices.insert(indices.end(), { a+2,a+8,b+2, b+2,a+8,b+8 });
-//         indices.insert(indices.end(), { a+3,b+3,a+9, a+9,b+3,b+9 });
-
-//         // connectors (right)
-//         indices.insert(indices.end(), { a+4,a+10,b+4, b+4,a+10,b+10 });
-//         indices.insert(indices.end(), { a+5,b+5,a+11, a+11,b+5,b+11 });
-//     }
-
-//     // 5) Upload mesh
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& /*T*/,
-//     const std::vector<glm::vec3>& /*N*/,
-//     const std::vector<glm::vec3>& /*B*/,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     // Railing parameters
-//     float railingHeight    = 1.9f;
-//     float railingOffset    = 0.05f;
-//     float railingThickness = 0.04f;
-//     float boardThickness   = 0.05f;
-
-//     const glm::vec3 WHITE(1,1,1);
-
-//     auto pushVert = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x,p.y,p.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             WHITE.r,WHITE.g,WHITE.b
-//                                         });
-//     };
-
-//     // ----------------------------------------------------
-//     // 1) Compute arc-length UV for v
-//     // ----------------------------------------------------
-//     std::vector<float> cumLen(Nsamples);
-//     float totalLen = 0.f;
-
-//     cumLen[0] = 0.f;
-//     for (size_t i = 1; i < Nsamples; i++)
-//     {
-//         totalLen += glm::length(path[i] - path[i-1]);
-//         cumLen[i] = totalLen;
-//     }
-//     if (totalLen < 1e-6f) totalLen = 1.0f;
-
-//     // ----------------------------------------------------
-//     // 2) Compute stable frames from PATH ONLY
-//     // ----------------------------------------------------
-//     std::vector<glm::vec3> tangent(Nsamples);
-//     std::vector<glm::vec3> right(Nsamples);
-//     std::vector<glm::vec3> up(Nsamples);
-
-//     for (size_t i = 0; i < Nsamples; i++)
-//     {
-//         glm::vec3 T;
-
-//         if (i == 0)
-//             T = path[1] - path[0];
-//         else if (i == Nsamples - 1)
-//             T = path[i] - path[i-1];
-//         else
-//             T = path[i+1] - path[i-1];
-
-//         if (glm::length(T) < 1e-6f)
-//             T = glm::vec3(0,0,1);
-
-//         T = glm::normalize(T);
-
-//         glm::vec3 W(0,1,0);
-//         if (fabs(glm::dot(W,T)) > 0.9f)
-//             W = glm::vec3(1,0,0);
-
-//         glm::vec3 R = glm::normalize(glm::cross(W,T));
-//         glm::vec3 U = glm::normalize(glm::cross(T,R));
-
-//         tangent[i] = T;
-//         right[i]   = R;
-//         up[i]      = U;
-//     }
-
-//     // ----------------------------------------------------
-//     // 3) Build all vertices (16 per sample)
-//     // ----------------------------------------------------
-//     const unsigned int vertsPer = 16;
-
-//     for (size_t i = 0; i < Nsamples; i++)
-//     {
-//         glm::vec3 center  = path[i];
-//         glm::vec3 R       = right[i];
-//         glm::vec3 U       = up[i];
-
-//         glm::vec3 leftEdge  = center - R * halfW;
-//         glm::vec3 rightEdge = center + R * halfW;
-
-//         float v = cumLen[i] / totalLen;
-
-//         // TOP
-//         pushVert(leftEdge,  U, 0.0f, v); // 0
-//         pushVert(rightEdge, U, 1.0f, v); // 1
-
-//         // RAIL FRONT
-//         glm::vec3 leftBase  = leftEdge  - R * railingOffset;
-//         glm::vec3 rightBase = rightEdge + R * railingOffset;
-
-//         glm::vec3 leftTop   = leftBase  + U * railingHeight;
-//         glm::vec3 rightTop  = rightBase + U * railingHeight;
-
-//         // pushVert(leftBase,  U, v, 0.0f); // 2
-//         // pushVert(leftTop,   U, v, 1.0f); // 3
-//         // pushVert(rightBase, U, v + 1.0f, 0.0f); // 4
-//         // pushVert(rightTop,  U, v + 1.0f, 1.0f); // 5
-
-//         // RAIL FRONT
-//         pushVert(leftBase,  U, 0.0f, 0.0f);
-//         pushVert(leftTop,   U, 0.0f, 1.0f);
-//         pushVert(rightBase, U, 1.0f, 0.0f);
-//         pushVert(rightTop,  U, 1.0f, 1.0f);
-
-
-//         glm::vec3 leftBaseB  = leftBase  + R * railingThickness;
-//         glm::vec3 leftTopB   = leftTop   + R * railingThickness;
-
-//         glm::vec3 rightBaseB = rightBase - R * railingThickness;
-//         glm::vec3 rightTopB  = rightTop  - R * railingThickness;
-
-//         // RAIL BACK
-//         pushVert(leftBaseB,  U, 0.0f, 0.0f);
-//         pushVert(leftTopB,   U, 0.0f, 1.0f);
-//         pushVert(rightBaseB, U, 1.0f, 0.0f);
-//         pushVert(rightTopB,  U, 1.0f, 1.0f);
-
-
-//         // BOTTOM
-//         glm::vec3 leftBot  = leftEdge  - U * boardThickness;
-//         glm::vec3 rightBot = rightEdge - U * boardThickness;
-
-//         pushVert(leftBot,  -U, 0.0f, v); // 6
-//         pushVert(rightBot, -U, 1.0f, v); // 7
-
-//         // RAIL BACK (THICKNESS)
-
-
-//         pushVert(leftBaseB,  U, v, 0.0f); // 8
-//         pushVert(leftTopB,   U, v, 1.0f); // 9
-//         pushVert(rightBaseB, U, v + 1.0f, 0.0f); // 10
-//         pushVert(rightTopB,  U, v + 1.0f, 1.0f); // 11
-
-//         // WALLS
-//         // pushVert(leftEdge,  -R, v, 1.0f); // 12
-//         // pushVert(leftBot,   -R, v, 0.0f); // 13
-//         // pushVert(rightEdge,  R, v, 1.0f); // 14
-//         // pushVert(rightBot,   R, v, 0.0f); // 15
-
-//         pushVert(leftEdge,  -R, 0.0f, v); // 12
-//         pushVert(leftBot,   -R, 0.0f, v); // 13
-//         pushVert(rightEdge,  R, 1.0f, v); // 14
-//         pushVert(rightBot,   R, 1.0f, v); // 15
-//     }
-
-//     // ----------------------------------------------------
-//     // 4) Build indices
-//     // ----------------------------------------------------
-//     for (size_t i = 0; i < Nsamples - 1; i++)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i+1) * vertsPer;
-
-//         // top
-//         indices.insert(indices.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
-
-//         // bottom
-//         indices.insert(indices.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
-
-//         // walls
-//         indices.insert(indices.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
-//         indices.insert(indices.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
-
-//         // rail front
-//         indices.insert(indices.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
-//         indices.insert(indices.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
-
-//         // rail back
-//         indices.insert(indices.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
-//         indices.insert(indices.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
-
-//         // connectors (left)
-//         indices.insert(indices.end(), { a+2,a+8,b+2, b+2,a+8,b+8 });
-//         indices.insert(indices.end(), { a+3,b+3,a+9, a+9,b+3,b+9 });
-
-//         // connectors (right)
-//         indices.insert(indices.end(), { a+4,a+10,b+4, b+4,a+10,b+10 });
-//         indices.insert(indices.end(), { a+5,b+5,a+11, a+11,b+5,b+11 });
-//     }
-
-//     // ----------------------------------------------------
-//     // 5) Upload mesh
-//     // ----------------------------------------------------
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11*sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-
-// THIS WORKED WITH TEXTURES!!!
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& /*T*/,
-//     const std::vector<glm::vec3>& /*N*/,
-//     const std::vector<glm::vec3>& /*B*/,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-//     const glm::vec3 color(1.0f, 1.0f, 1.0f);
-
-//     auto pushVert = [&](const glm::vec3& p,
-//                         const glm::vec3& n,
-//                         float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x, p.y, p.z,
-//                                             n.x, n.y, n.z,
-//                                             u,   v,
-//                                             color.r, color.g, color.b
-//                                         });
-//     };
-
-//     // ----------------------------------------------------
-//     // 1) Compute arc-length parameter v along the path
-//     // ----------------------------------------------------
-//     std::vector<float> cumLen(Nsamples, 0.0f);
-//     float totalLen = 0.0f;
-//     for (size_t i = 1; i < Nsamples; ++i) {
-//         float seg = glm::length(path[i] - path[i - 1]);
-//         totalLen += seg;
-//         cumLen[i] = totalLen;
-//     }
-//     if (totalLen < 1e-6f) totalLen = 1.0f;  // avoid divide by zero
-
-//     // ----------------------------------------------------
-//     // 2) Build vertices (top surface only)
-//     // ----------------------------------------------------
-//     const unsigned int vertsPer = 2;
-
-//     for (size_t i = 0; i < Nsamples; ++i)
-//     {
-//         // Tangent: use neighbors / endpoints
-//         glm::vec3 tangent;
-//         if (i == 0)
-//             tangent = path[1] - path[0];
-//         else if (i == Nsamples - 1)
-//             tangent = path[Nsamples - 1] - path[Nsamples - 2];
-//         else
-//             tangent = path[i + 1] - path[i - 1];
-
-//         if (glm::length(tangent) < 1e-6f)
-//             tangent = glm::vec3(0, 0, 1);
-
-//         tangent = glm::normalize(tangent);
-
-//         // Pick a stable world up
-//         glm::vec3 worldUp(0, 1, 0);
-//         if (fabs(glm::dot(worldUp, tangent)) > 0.9f)
-//             worldUp = glm::vec3(1, 0, 0);
-
-//         // Construct right & up from tangent + worldUp
-//         glm::vec3 right = glm::normalize(glm::cross(worldUp, tangent));
-//         glm::vec3 up    = glm::normalize(glm::cross(tangent, right));
-
-//         glm::vec3 center    = path[i];
-//         glm::vec3 leftEdge  = center - right * halfW;
-//         glm::vec3 rightEdge = center + right * halfW;
-
-//         float vTrack = cumLen[i] / totalLen;  // 0..1 along length
-
-//         // Top surface only
-//         pushVert(leftEdge,  up, 0.0f, vTrack); // local 0
-//         pushVert(rightEdge, up, 1.0f, vTrack); // local 1
-//     }
-
-//     // ----------------------------------------------------
-//     // 3) Build indices (triangle strip as individual tris)
-//     // ----------------------------------------------------
-//     for (size_t i = 0; i < Nsamples - 1; ++i)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i + 1) * vertsPer;
-
-//         // quad (a0, b0, a1, b1)
-//         indices.push_back(a + 0); indices.push_back(b + 0); indices.push_back(a + 1);
-//         indices.push_back(a + 1); indices.push_back(b + 0); indices.push_back(b + 1);
-//     }
-
-//     // ----------------------------------------------------
-//     // 4) Setup mesh
-//     // ----------------------------------------------------
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3 * sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6 * sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8 * sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& T,
-//     const std::vector<glm::vec3>& N,
-//     const std::vector<glm::vec3>& B,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     const glm::vec3 color(1, 1, 1);
-
-//     auto pushVert = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x,p.y,p.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             color.r,color.g,color.b
-//                                         });
-//     };
-
-//     // *** ONLY TWO vertices per sample ***
-//     const unsigned int vertsPer = 2;
-
-//     for (size_t i = 0; i < Nsamples; i++)
-//     {
-//         glm::vec3 right  = N[i];
-//         glm::vec3 up     = B[i];
-//         glm::vec3 center = path[i];
-
-//         glm::vec3 leftEdge  = center - right * halfW;
-//         glm::vec3 rightEdge = center + right * halfW;
-
-//         float vTrack = float(i) / float(Nsamples - 1);
-
-//         // ONLY TOP SURFACE
-//         pushVert(leftEdge,  up, 0.0f, vTrack); // 0
-//         pushVert(rightEdge, up, 1.0f, vTrack); // 1
-//     }
-
-//     // ---------------- BUILD INDICES -----------------
-//     for (size_t i = 0; i < Nsamples - 1; i++)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i + 1) * vertsPer;
-
-//         // Top quad
-//         indices.insert(indices.end(), {
-//                                           a+0, b+0, a+1,
-//                                           a+1, b+0, b+1
-//                                       });
-//     }
-
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-
-
-// UNCOMMENT THIS AFTER TEST ONLY FLATBOARD
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& T,
-//     const std::vector<glm::vec3>& N,
-//     const std::vector<glm::vec3>& B,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     float railingHeight    = 1.9f;
-//     float railingOffset    = 0.05f;
-//     float railingThickness = 0.04f;
-//     float boardThickness   = 0.05f;
-
-//     const glm::vec3 color(1,1,1);
-
-//     auto pushVert = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x,p.y,p.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             color.r,color.g,color.b
-//                                         });
-//     };
-
-//     // 16 vertices per path sample
-//     const unsigned int vertsPer = 16;
-
-//     for (size_t i = 0; i < Nsamples; i++)
-//     {
-//         glm::vec3 right = N[i];
-//         glm::vec3 up    = B[i];
-//         glm::vec3 center = path[i];
-
-//         glm::vec3 leftEdge  = center - right * halfW;
-//         glm::vec3 rightEdge = center + right * halfW;
-
-//         float vTrack = float(i) / float(Nsamples - 1);
-
-//         // ---------------- TOP SURFACE ----------------
-//         pushVert(leftEdge,  up, 0.0f, vTrack); // 0
-//         pushVert(rightEdge, up, 1.0f, vTrack); // 1
-
-//         // ---------------- RAILING FRONT --------------
-//         glm::vec3 leftFrontBase  = leftEdge  - right * railingOffset;
-//         glm::vec3 rightFrontBase = rightEdge + right * railingOffset;
-
-//         glm::vec3 leftFrontTop   = leftFrontBase  + up * railingHeight;
-//         glm::vec3 rightFrontTop  = rightFrontBase + up * railingHeight;
-
-//         pushVert(leftFrontBase,  up, 0.0f, 0.0f); // 2
-//         pushVert(leftFrontTop,   up, 0.0f, 1.0f); // 3
-//         pushVert(rightFrontBase, up, 1.0f, 0.0f); // 4
-//         pushVert(rightFrontTop,  up, 1.0f, 1.0f); // 5
-
-//         // ---------------- BOTTOM SURFACE -------------
-//         glm::vec3 leftBottom  = leftEdge  - up * boardThickness;
-//         glm::vec3 rightBottom = rightEdge - up * boardThickness;
-
-//         pushVert(leftBottom,  -up, 0.0f, vTrack); // 6
-//         pushVert(rightBottom, -up, 1.0f, vTrack); // 7
-
-//         // ---------------- RAILING BACK (thickness) ---
-//         glm::vec3 leftBackBase  = leftFrontBase  + right * railingThickness;
-//         glm::vec3 leftBackTop   = leftFrontTop   + right * railingThickness;
-
-//         glm::vec3 rightBackBase = rightFrontBase - right * railingThickness;
-//         glm::vec3 rightBackTop  = rightFrontTop  - right * railingThickness;
-
-//         pushVert(leftBackBase,  up, 0.0f, 0.0f); // 8
-//         pushVert(leftBackTop,   up, 0.0f, 1.0f); // 9
-//         pushVert(rightBackBase, up, 1.0f, 0.0f); // 10
-//         pushVert(rightBackTop,  up, 1.0f, 1.0f); // 11
-
-//         // ---------------- SIDE WALL LEFT -------------
-//         glm::vec3 leftWallTop    = leftEdge;
-//         glm::vec3 leftWallBottom = leftBottom;
-//         glm::vec3 leftNormal = -right;
-
-//         pushVert(leftWallTop,    leftNormal, 0.0f, 1.0f); // 12
-//         pushVert(leftWallBottom, leftNormal, 0.0f, 0.0f); // 13
-
-//         // ---------------- SIDE WALL RIGHT ------------
-//         glm::vec3 rightNormal = right;
-
-//         pushVert(rightEdge,      rightNormal, 1.0f, 1.0f); // 14
-//         pushVert(rightBottom,    rightNormal, 1.0f, 0.0f); // 15
-//     }
-
-//     // ---------------- BUILD INDICES -----------------
-//     for (size_t i = 0; i < Nsamples - 1; i++)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i+1) * vertsPer;
-
-//         // Top
-//         indices.insert(indices.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
-
-//         // Bottom
-//         indices.insert(indices.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
-
-//         // Left wall
-//         indices.insert(indices.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
-
-//         // Right wall
-//         indices.insert(indices.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
-
-//         // Railing front
-//         indices.insert(indices.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
-
-//         // Railing front right
-//         indices.insert(indices.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
-
-//         // Railing back
-//         indices.insert(indices.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
-
-//         // Railing back right
-//         indices.insert(indices.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
-//     }
-
-
-
-//     // DEBUG: dump UVs for the first two samples
-//     {
-//         const int strideFloats = 11;
-//         const int vertsPer = 16;   // we use 16 per sample
-
-//         auto printVert = [&](int sample, int localIndex, const char* label)
-//         {
-//             int globalIndex = sample * vertsPer + localIndex;
-//             int base = globalIndex * strideFloats;
-
-//             float px = vertices[base + 0];
-//             float py = vertices[base + 1];
-//             float pz = vertices[base + 2];
-
-//             float u  = vertices[base + 6];
-//             float v  = vertices[base + 7];
-
-//             std::cout << label
-//                       << " (sample " << sample << ", local " << localIndex << "): "
-//                       << "pos = (" << px << ", " << py << ", " << pz << "), "
-//                       << "uv = (" << u << ", " << v << ")\n";
-//         };
-
-//         if (Nsamples >= 2) {
-//             // std::cout << "==== FLATBOARD UV DEBUG ====\n";
-
-//             // // sample 0 (start of board)
-//             // printVert(0, 0, "top-left   ");
-//             // printVert(0, 1, "top-right  ");
-//             // printVert(0, 6, "bottom-left");
-//             // printVert(0, 7, "bottom-right");
-//             // printVert(0,12, "sideL-top  ");
-//             // printVert(0,13, "sideL-bot  ");
-//             // printVert(0,14, "sideR-top  ");
-//             // printVert(0,15, "sideR-bot  ");
-
-//             // // sample Nsamples-1 (end of board)
-//             // int s1 = int(Nsamples - 1);
-//             // printVert(s1, 0, "END top-left   ");
-//             // printVert(s1, 1, "END top-right  ");
-//             // printVert(s1, 6, "END bottom-left");
-//             // printVert(s1, 7, "END bottom-right");
-//             // printVert(s1,12, "END sideL-top  ");
-//             // printVert(s1,13, "END sideL-bot  ");
-//             // printVert(s1,14, "END sideR-top  ");
-//             // printVert(s1,15, "END sideR-bot  ");
-
-//             // std::cout << "============================\n";
-//         }
-//     }
-
-
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//         {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//         {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//         {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//         {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& /*T*/,
-//     const std::vector<glm::vec3>& /*N*/,
-//     const std::vector<glm::vec3>& /*B*/,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     float railingHeight    = 1.9f;
-//     float railingOffset    = 0.05f;
-//     float railingThickness = 0.04f;
-//     float boardThickness   = 0.05f;
-
-//     const glm::vec3 WHITE(1,1,1);
-
-//     auto pushVert = [&](glm::vec3 p, glm::vec3 n, float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             p.x,p.y,p.z,
-//                                             n.x,n.y,n.z,
-//                                             u,v,
-//                                             WHITE.r,WHITE.g,WHITE.b
-//                                         });
-//     };
-
-//     // ------------------------------------------------------------
-//     // 1) Compute stable frames from PATH ONLY (same as ribbon version)
-//     // ------------------------------------------------------------
-//     std::vector<glm::vec3> tangent(Nsamples);
-//     std::vector<glm::vec3> right(Nsamples);
-//     std::vector<glm::vec3> up(Nsamples);
-
-//     for (size_t i = 0; i < Nsamples; ++i)
-//     {
-//         glm::vec3 T;
-
-//         if (i == 0)
-//             T = path[1] - path[0];
-//         else if (i == Nsamples - 1)
-//             T = path[i] - path[i - 1];
-//         else
-//             T = path[i + 1] - path[i - 1];
-
-//         if (glm::length(T) < 1e-6f) T = glm::vec3(0,0,1);
-//         T = glm::normalize(T);
-
-//         glm::vec3 W(0,1,0);
-//         if (fabs(glm::dot(W,T)) > 0.9f) W = glm::vec3(1,0,0);
-
-//         glm::vec3 R = glm::normalize(glm::cross(W, T));
-//         glm::vec3 U = glm::normalize(glm::cross(T, R));
-
-//         tangent[i] = T;
-//         right[i]   = R;
-//         up[i]      = U;
-//     }
-
-//     // ------------------------------------------------------------
-//     // 2) Build all vertices for every sample
-//     // ------------------------------------------------------------
-
-//     for (size_t i = 0; i < Nsamples; i++)
-//     {
-//         glm::vec3 center = path[i];
-//         glm::vec3 R = right[i];
-//         glm::vec3 U = up[i];
-
-//         glm::vec3 leftEdge  = center - R * halfW;
-//         glm::vec3 rightEdge = center + R * halfW;
-
-//         float v = float(i) / float(Nsamples - 1);
-
-//         // --- TOP ---
-//         pushVert(leftEdge,  U, 0.0f, v);  // 0
-//         pushVert(rightEdge, U, 1.0f, v);  // 1
-
-//         // --- RAILING BASES ---
-//         glm::vec3 leftRailBase  = leftEdge  - R * railingOffset;
-//         glm::vec3 rightRailBase = rightEdge + R * railingOffset;
-
-//         glm::vec3 leftRailTop   = leftRailBase  + U * railingHeight;
-//         glm::vec3 rightRailTop  = rightRailBase + U * railingHeight;
-
-//         pushVert(leftRailBase,   U, 0.0f, 0.0f); // 2
-//         pushVert(leftRailTop,    U, 0.0f, 1.0f); // 3
-//         pushVert(rightRailBase,  U, 1.0f, 0.0f); // 4
-//         pushVert(rightRailTop,   U, 1.0f, 1.0f); // 5
-
-//         // --- BOTTOM ---
-//         glm::vec3 leftBottom  = leftEdge  - U * boardThickness;
-//         glm::vec3 rightBottom = rightEdge - U * boardThickness;
-
-//         pushVert(leftBottom,  -U, 0.0f, v); // 6
-//         pushVert(rightBottom, -U, 1.0f, v); // 7
-
-//         // --- RAIL BACK THICKNESS ---
-//         glm::vec3 leftRailBaseBack  = leftRailBase  + R * railingThickness;
-//         glm::vec3 leftRailTopBack   = leftRailTop   + R * railingThickness;
-
-//         glm::vec3 rightRailBaseBack = rightRailBase - R * railingThickness;
-//         glm::vec3 rightRailTopBack  = rightRailTop  - R * railingThickness;
-
-//         pushVert(leftRailBaseBack,  U, 0.0f, 0.0f); // 8
-//         pushVert(leftRailTopBack,   U, 0.0f, 1.0f); // 9
-//         pushVert(rightRailBaseBack, U, 1.0f, 0.0f); // 10
-//         pushVert(rightRailTopBack,  U, 1.0f, 1.0f); // 11
-
-//         // --- SIDE WALLS ---
-//         glm::vec3 normalLeft  = -R;
-//         glm::vec3 normalRight =  R;
-
-//         pushVert(leftEdge,    normalLeft,  0.0f, 1.0f); // 12
-//         pushVert(leftBottom,  normalLeft,  0.0f, 0.0f); // 13
-
-//         pushVert(rightEdge,   normalRight, 1.0f, 1.0f); // 14
-//         pushVert(rightBottom, normalRight, 1.0f, 0.0f); // 15
-//     }
-
-//     // ------------------------------------------------------------
-//     // 3) Build indices (same layout as before)
-//     // ------------------------------------------------------------
-//     const unsigned int vertsPer = 16;
-
-//     for (size_t i = 0; i < Nsamples - 1; i++)
-//     {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i + 1) * vertsPer;
-
-//         // Top
-//         indices.insert(indices.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
-
-//         // Bottom
-//         indices.insert(indices.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
-
-//         // Left wall
-//         indices.insert(indices.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
-
-//         // Right wall
-//         indices.insert(indices.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
-
-//         // Rail front left
-//         indices.insert(indices.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
-
-//         // Rail back left
-//         indices.insert(indices.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
-
-//         // Rail front right
-//         indices.insert(indices.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
-
-//         // Rail back right
-//         indices.insert(indices.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
-
-//         // Connectors left
-//         indices.insert(indices.end(), { a+2,a+8,b+2, b+2,a+8,b+8 });
-//         indices.insert(indices.end(), { a+3,b+3,a+9, a+9,b+3,b+9 });
-
-//         // Connectors right
-//         indices.insert(indices.end(), { a+4,a+10,b+4, b+4,a+10,b+10 });
-//         indices.insert(indices.end(), { a+5,b+5,a+11, a+11,b+5,b+11 });
-//     }
-
-//     // ------------------------------------------------------------
-//     // 4) Upload mesh
-//     // ------------------------------------------------------------
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//         {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//         {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//         {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//         {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-
-// UNCOMMENT IF THE ABOVE DOES NOT WORK !!!!!
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     const std::vector<glm::vec3>& T,
-//     const std::vector<glm::vec3>& N,
-//     const std::vector<glm::vec3>& B,
-//     float width)
-// {
-//     Mesh mesh;
-//     std::vector<float>        vertices;
-//     std::vector<unsigned int> indices;
-
-//     const size_t Nsamples = path.size();
-//     if (Nsamples < 2 || T.size() != Nsamples || N.size() != Nsamples || B.size() != Nsamples)
-//         return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     float railingHeight   = 1.9f;
-//     float railingOffset   = 0.05f;
-//     float railingThickness= 0.04f;
-//     float boardThickness  = 0.05f;
-
-//     const glm::vec3 color(1.0f, 1.0f, 1.0f);
-
-//     auto pushVert = [&](const glm::vec3& pos,
-//                         const glm::vec3& n,
-//                         float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             pos.x, pos.y, pos.z,
-//                                             n.x,   n.y,   n.z,
-//                                             u,     v,
-//                                             color.r, color.g, color.b
-//                                         });
-//     };
-
-//     // 1) Build vertices using given frames
-//     for (size_t i = 0; i < Nsamples; ++i) {
-//         glm::vec3 forward = T[i];
-//         glm::vec3 right   = N[i];
-//         glm::vec3 up      = B[i];
-
-//         glm::vec3 center   = path[i];
-//         glm::vec3 leftEdge = center - right * halfW;
-//         glm::vec3 rightEdge= center + right * halfW;
-
-//         float v = float(i) / float(Nsamples - 1);
-
-//         // top surface
-//         pushVert(leftEdge,  up, 0.0f, v);  // 0
-//         pushVert(rightEdge, up, 1.0f, v);  // 1
-
-//         // left railing front
-//         glm::vec3 leftRailBase = leftEdge - right * railingOffset;
-//         glm::vec3 rightRailBase= rightEdge + right * railingOffset;
-
-//         glm::vec3 leftRailTop  = leftRailBase  + up * railingHeight;
-//         glm::vec3 rightRailTop = rightRailBase + up * railingHeight;
-
-//         // float uRailLeft  = -0.1f;
-//         // float uRailRight = 1.1f;
-
-//         float uRailLeft  = 0.0f;
-//         float uRailRight = 1.0f;
-
-//         float vRailBottom  = 0.0f;
-//         float vRailTop = 1.0f;
-
-//         pushVert(leftRailBase, up, uRailLeft,  vRailBottom); // 2
-//         pushVert(leftRailTop,  up, uRailLeft,  vRailTop); // 3
-
-//         // right railing front
-//         pushVert(rightRailBase, up, uRailRight, vRailBottom); // 4
-//         pushVert(rightRailTop,  up, uRailRight, vRailTop); // 5
-
-//         // bottom surface
-//         glm::vec3 leftBottom  = leftEdge  - up * boardThickness;
-//         glm::vec3 rightBottom = rightEdge - up * boardThickness;
-
-//         pushVert(leftBottom,  -up, 0.0f, v); // 6
-//         pushVert(rightBottom, -up, 1.0f, v); // 7
-
-//         // left railing back (thickness)
-//         glm::vec3 leftRailBaseBack = leftRailBase  + right * railingThickness;
-//         glm::vec3 leftRailTopBack  = leftRailTop   + right * railingThickness;
-
-//         // right railing back (thickness)
-//         glm::vec3 rightRailBaseBack= rightRailBase - right * railingThickness;
-//         glm::vec3 rightRailTopBack = rightRailTop  - right * railingThickness;
-
-
-//         float railU0 = 0.0f;
-//         float railU1 = 1.0f;
-
-//         pushVert(leftRailBaseBack,  up, railU0,  vRailBottom); // 8
-//         pushVert(leftRailTopBack,   up, railU0,  vRailTop); // 9
-
-//         pushVert(rightRailBaseBack, up, railU1, vRailBottom); // 10
-//         pushVert(rightRailTopBack,  up, railU1, vRailTop); // 11
-
-
-//         glm::vec3 leftNormal  = -right;
-//         glm::vec3 rightNormal =  right;
-
-//         pushVert(leftEdge,       leftNormal, 0.0f, 1.0f); // 12 top-left
-//         pushVert(leftBottom,     leftNormal, 0.0f, 0.0f); // 13 bottom-left
-
-//         // RIGHT side wall vertices
-//         pushVert(rightEdge,      rightNormal, 1.0f, 1.0f); // 14 top-right
-//         pushVert(rightBottom,    rightNormal, 1.0f, 0.0f); // 15 bottom-right
-//     }
-
-//     // 2) indices
-//     const unsigned int vertsPer = 16;
-
-//     for (size_t i = 0; i < Nsamples - 1; ++i) {
-//         unsigned int a = i * vertsPer;
-//         unsigned int b = (i + 1) * vertsPer;
-
-//         // top board
-//         indices.push_back(a+0); indices.push_back(b+0); indices.push_back(a+1);
-//         indices.push_back(a+1); indices.push_back(b+0); indices.push_back(b+1);
-
-//         // bottom board
-//         indices.push_back(a+6); indices.push_back(b+6); indices.push_back(a+7);
-//         indices.push_back(a+7); indices.push_back(b+6); indices.push_back(b+7);
-
-
-//         // LEFT side wall (uses new 12,13 vertices)
-//         indices.push_back(a+12); indices.push_back(a+13); indices.push_back(b+12);
-//         indices.push_back(b+12); indices.push_back(a+13); indices.push_back(b+13);
-
-//         // RIGHT side wall (uses new 14,15 vertices)
-//         indices.push_back(a+14); indices.push_back(b+14); indices.push_back(a+15);
-//         indices.push_back(a+15); indices.push_back(b+14); indices.push_back(b+15);
-
-
-//         // // left side of board
-//         // indices.push_back(a+0); indices.push_back(a+6); indices.push_back(b+0);
-//         // indices.push_back(b+0); indices.push_back(a+6); indices.push_back(b+6);
-
-//         // // right side of board
-//         // indices.push_back(a+1); indices.push_back(b+1); indices.push_back(a+7);
-//         // indices.push_back(a+7); indices.push_back(b+1); indices.push_back(b+7);
-
-//         // left railing front
-//         indices.push_back(a+2); indices.push_back(b+2); indices.push_back(a+3);
-//         indices.push_back(a+3); indices.push_back(b+2); indices.push_back(b+3);
-
-//         // left railing back
-//         indices.push_back(a+8); indices.push_back(b+8); indices.push_back(a+9);
-//         indices.push_back(a+9); indices.push_back(b+8); indices.push_back(b+9);
-
-//         // right railing front
-//         indices.push_back(a+4); indices.push_back(b+4); indices.push_back(a+5);
-//         indices.push_back(a+5); indices.push_back(b+4); indices.push_back(b+5);
-
-//         // rail left side connectors:
-//         indices.push_back(a+2); indices.push_back(a+8); indices.push_back(b+2);
-//         indices.push_back(b+2); indices.push_back(a+8); indices.push_back(b+8);
-
-//         indices.push_back(a+3); indices.push_back(b+3); indices.push_back(a+9);
-//         indices.push_back(a+9); indices.push_back(b+3); indices.push_back(b+9);
-
-//         // rail right back:
-//         indices.push_back(a+10); indices.push_back(b+10); indices.push_back(a+11);
-//         indices.push_back(a+11); indices.push_back(b+10); indices.push_back(b+11);
-
-//         // rail right side connectors:
-//         indices.push_back(a+4); indices.push_back(a+10); indices.push_back(b+4);
-//         indices.push_back(b+4); indices.push_back(a+10); indices.push_back(b+10);
-
-//         indices.push_back(a+5); indices.push_back(b+5); indices.push_back(a+11);
-//         indices.push_back(a+11); indices.push_back(b+5); indices.push_back(b+11);
-//     }
-
-//     // 3) setup mesh
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//                        {1, 3, GL_FLOAT, GL_FALSE, stride, 3 * sizeof(float)},
-//                        {2, 2, GL_FLOAT, GL_FALSE, stride, 6 * sizeof(float)},
-//                        {3, 3, GL_FLOAT, GL_FALSE, stride, 8 * sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-Mesh createFlatBoardLocal(
-    const std::vector<glm::vec3>& path,
-    const std::vector<glm::vec3>& T,
-    const std::vector<glm::vec3>& N,
-    const std::vector<glm::vec3>& B,
-    float width)
-{
-    Mesh mesh;
-    std::vector<float>        vertices;
-    std::vector<unsigned int> indices;
-
-    const size_t Nsamples = path.size();
-    if (Nsamples < 2) return mesh;
-
-    // All geometry in LOCAL space
-    const float halfW = width * 0.5f;
-
-    const float boardThickness = 0.05f;
-    const float railHeight     = 0.30f;
-    const float railOffset     = 0.05f;
-    const float railThickness  = 0.02f;
-
-    auto pushVert = [&](glm::vec3 localP, glm::vec3 localN, float u, float v)
-    {
-        // localP is (x,y,z) in local frame
-        vertices.insert(vertices.end(), {
-                                            localP.x, localP.y, localP.z,
-                                            localN.x, localN.y, localN.z,
-                                            u, v,
-                                            1.0f,1.0f,1.0f // color
-                                        });
-    };
-
-    // -------------------------
-    // Build per-sample mesh
-    // -------------------------
-    for (size_t i=0; i<Nsamples; ++i)
-    {
-        float v = float(i) / float(Nsamples - 1);
-
-        glm::vec3 right = N[i];
-        glm::vec3 up    = B[i];
-
-        // LOCAL space edges
-        glm::vec3 leftEdge  = -right * halfW;
-        glm::vec3 rightEdge =  right * halfW;
-
-        // top surface
-        pushVert(leftEdge,  up, 0.0f, v);
-        pushVert(rightEdge, up, 1.0f, v);
-
-        // bottom surface
-        pushVert(leftEdge - up*boardThickness,  -up, 0.0f, v);
-        pushVert(rightEdge - up*boardThickness, -up, 1.0f, v);
-
-        // rail bases (symmetric)
-        glm::vec3 leftRailB  = leftEdge  - right*railOffset;
-        glm::vec3 rightRailB = rightEdge + right*railOffset;
-
-        glm::vec3 leftRailT  = leftRailB  + up * railHeight;
-        glm::vec3 rightRailT = rightRailB + up * railHeight;
-
-        // push rails
-        pushVert(leftRailB,  up, -0.1f, v);
-        pushVert(leftRailT,  up, -0.1f, v);
-
-        pushVert(rightRailB, up, 1.1f, v);
-        pushVert(rightRailT, up, 1.1f, v);
-
-        // thick back rails
-        pushVert(leftRailB  + right*railThickness, up, -0.1f, v);
-        pushVert(leftRailT  + right*railThickness, up, -0.1f, v);
-
-        pushVert(rightRailB - right*railThickness, up, 1.1f, v);
-        pushVert(rightRailT - right*railThickness, up, 1.1f, v);
-    }
-
-    // indices identical to your previous version (same topology)
-    // but using local vertices only
-    const unsigned int stride = 12;
-    for (unsigned int i=0; i < Nsamples-1; ++i) {
-        unsigned int a = i * stride;
-        unsigned int b = (i+1) * stride;
-
-        // top board
-        indices.push_back(a+0); indices.push_back(b+0); indices.push_back(a+1);
-        indices.push_back(a+1); indices.push_back(b+0); indices.push_back(b+1);
-
-        // bottom board
-        indices.push_back(a+6); indices.push_back(b+6); indices.push_back(a+7);
-        indices.push_back(a+7); indices.push_back(b+6); indices.push_back(b+7);
-
-        // left side of board
-        indices.push_back(a+0); indices.push_back(a+6); indices.push_back(b+0);
-        indices.push_back(b+0); indices.push_back(a+6); indices.push_back(b+6);
-
-        // right side of board
-        indices.push_back(a+1); indices.push_back(b+1); indices.push_back(a+7);
-        indices.push_back(a+7); indices.push_back(b+1); indices.push_back(b+7);
-
-        // left railing front
-        indices.push_back(a+2); indices.push_back(b+2); indices.push_back(a+3);
-        indices.push_back(a+3); indices.push_back(b+2); indices.push_back(b+3);
-
-        // left railing back
-        indices.push_back(a+8); indices.push_back(b+8); indices.push_back(a+9);
-        indices.push_back(a+9); indices.push_back(b+8); indices.push_back(b+9);
-
-        // right railing front
-        indices.push_back(a+4); indices.push_back(b+4); indices.push_back(a+5);
-        indices.push_back(a+5); indices.push_back(b+4); indices.push_back(b+5);
-
-        // rail left side connectors:
-        indices.push_back(a+2); indices.push_back(a+8); indices.push_back(b+2);
-        indices.push_back(b+2); indices.push_back(a+8); indices.push_back(b+8);
-
-        indices.push_back(a+3); indices.push_back(b+3); indices.push_back(a+9);
-        indices.push_back(a+9); indices.push_back(b+3); indices.push_back(b+9);
-
-        // rail right back:
-        indices.push_back(a+10); indices.push_back(b+10); indices.push_back(a+11);
-        indices.push_back(a+11); indices.push_back(b+10); indices.push_back(b+11);
-
-        // rail right side connectors:
-        indices.push_back(a+4); indices.push_back(a+10); indices.push_back(b+4);
-        indices.push_back(b+4); indices.push_back(a+10); indices.push_back(b+10);
-
-        indices.push_back(a+5); indices.push_back(b+5); indices.push_back(a+11);
-        indices.push_back(a+11); indices.push_back(b+5); indices.push_back(b+11);
-
-    }
-
-    mesh.vertices = vertices;
-    mesh.indices  = indices;
-
-    GLsizei strideBytes = 11*sizeof(float);
-    mesh.attributes = {
-                       {0,3,GL_FLOAT,GL_FALSE,strideBytes,0},
-                       {1,3,GL_FLOAT,GL_FALSE,strideBytes,3*sizeof(float)},
-                       {2,2,GL_FLOAT,GL_FALSE,strideBytes,6*sizeof(float)},
-                       {3,3,GL_FLOAT,GL_FALSE,strideBytes,8*sizeof(float)},
-                       };
-
-    mesh.setup();
-    return mesh;
-}
-
-
 Mesh createDebugPathLine(const std::vector<glm::vec3>& path,
                          const glm::vec3& color)
 {
@@ -2783,296 +1079,6 @@ Mesh createDebugBulletMesh(const std::vector<DebugLine>& lines)
 }
 
 
-
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& controlPoints,
-//     float width,
-//     unsigned int pathResolution)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     if (controlPoints.size() < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     float railingHeight = 0.3f;   // how tall
-//     float railingOffset = 0.05f;  // how far outward from the board edge
-//     float railingThickness = 0.02f; // thickness (flat bar)
-
-//     // -------------------------------------------------------------------
-//     // 1) Sample Catmull-Rom path EXACTLY as in your original version
-//     // -------------------------------------------------------------------
-//     std::vector<glm::vec3> path;
-//     for (size_t i = 0; i < controlPoints.size() - 1; ++i) {
-//         for (unsigned int j = 0; j < pathResolution; ++j) {
-//             float t = float(j) / float(pathResolution);
-
-//             glm::vec3 p0 = (i == 0) ? controlPoints[i] : controlPoints[i - 1];
-//             glm::vec3 p1 = controlPoints[i];
-//             glm::vec3 p2 = controlPoints[i + 1];
-//             glm::vec3 p3 = (i + 2 < controlPoints.size()) ? controlPoints[i + 2] : controlPoints[i + 1];
-
-//             path.push_back(catmullRom(p0, p1, p2, p3, t));
-//         }
-//     }
-//     path.push_back(controlPoints.back());
-
-//     const size_t N = path.size();
-//     const glm::vec3 color(1.0f, 1.0f, 1.0f);
-
-//     // -------------------------------------------------------------------
-//     // 2) Build Parallel Transport Frames for each sample
-//     // -------------------------------------------------------------------
-//     std::vector<glm::vec3> T(N);  // tangent
-//     std::vector<glm::vec3> Nn(N); // normal
-//     std::vector<glm::vec3> B(N);  // binormal
-
-//     // --- Initial tangent ---
-//     T[0] = glm::normalize(path[1] - path[0]);
-
-//     // --- Choose stable initial normal ---
-//     // glm::vec3 arbitrary =
-//     //     (fabs(T[0].y) < 0.9f ? glm::vec3(0,1,0) : glm::vec3(1,0,0));
-
-//     // Nn[0] = glm::normalize(glm::cross(arbitrary, T[0]));
-//     // B[0]  = glm::cross(T[0], Nn[0]);
-
-
-//     // Always use worldUp to stabilize the board around curves
-//     // glm::vec3 worldUp(0,1,0);
-
-//     // // Ensure worldUp is not parallel to the tangent
-//     // glm::vec3 right0 = glm::cross(worldUp, T[0]);
-//     // if (glm::length(right0) < 1e-6f)
-//     //     right0 = glm::cross(glm::vec3(1,0,0), T[0]);
-
-//     // right0 = glm::normalize(right0);
-//     // glm::vec3 up0 = glm::normalize(glm::cross(T[0], right0));
-
-//     // Nn[0] = right0;  // right
-//     // B[0]  = up0;     // normal
-
-
-//     glm::vec3 arbitraryUp(0,1,0);
-
-//     // If tangent is too vertical, choose another reference up-axis
-//     if (fabs(glm::dot(T[0], arbitraryUp)) > 0.9f)
-//         arbitraryUp = glm::vec3(1,0,0);
-
-//     // Build a *perfectly orthogonal* starting frame
-//     glm::vec3 right0 = glm::normalize(glm::cross(arbitraryUp, T[0]));
-//     glm::vec3 up0    = glm::normalize(glm::cross(T[0], right0));
-
-//     Nn[0] = right0;
-//     B[0]  = up0;
-
-
-
-//     for (size_t i = 1; i < N; i++) {
-//         glm::vec3 t_prev = T[i-1];
-//         glm::vec3 t = glm::normalize(path[i] - path[i-1]);
-
-//         T[i] = t;
-
-//         glm::vec3 v = glm::cross(t_prev, t);
-//         float c = glm::dot(t_prev, t);
-
-//         if (glm::length(v) < 1e-6f) {
-//             // No rotation needed
-//             Nn[i] = Nn[i-1];
-//         } else {
-//             float s = glm::length(v);
-//             glm::vec3 axis = v / s;
-//             float angle = atan2(s, c);
-
-//             glm::mat3 K(
-//                 0,      -axis.z,  axis.y,
-//                 axis.z,  0,      -axis.x,
-//                 -axis.y,  axis.x,  0
-//                 );
-
-//             glm::mat3 R =
-//                 glm::mat3(1.0f) * glm::cos(angle)
-//                 + (1 - glm::cos(angle)) * glm::outerProduct(axis, axis)
-//                 + glm::sin(angle) * K;
-
-//             Nn[i] = glm::normalize(R * Nn[i-1]);
-//         }
-
-//         B[i] = glm::cross(T[i], Nn[i]);
-//     }
-
-//     // -------------------------------------------------------------------
-//     // 3) Create vertices (left/right positions)
-//     // -------------------------------------------------------------------
-//     auto pushVert = [&](const glm::vec3& pos,
-//                         const glm::vec3& n,
-//                         float u, float v)
-//     {
-//         vertices.insert(vertices.end(), {
-//                                             pos.x, pos.y, pos.z,
-//                                             n.x, n.y, n.z,
-//                                             u, v,
-//                                             color.r, color.g, color.b
-//                                         });
-//     };
-
-//     for (size_t i = 0; i < N; ++i) {
-//         // glm::vec3 right = Nn[i];
-//         // glm::vec3 normal = B[i];
-
-
-//         glm::vec3 forward = T[i];
-//         glm::vec3 worldUp(0,1,0);
-
-//         // force a stable up vector
-//         glm::vec3 up = worldUp - glm::dot(worldUp, forward) * forward;
-//         if (glm::length2(up) < 1e-6f)
-//             up = B[i];       // fallback (rare)
-//         else
-//             up = glm::normalize(up);
-
-//         // right = horizontal axis
-//         glm::vec3 right = glm::normalize(glm::cross(forward, up));
-
-//         // normal = up
-//         glm::vec3 normal = up;
-
-//         // glm::vec3 tangent = T[i];
-//         // glm::vec3 up = glm::vec3(0,1,0);
-//         // glm::vec3 right = glm::normalize(glm::cross(up, tangent));
-//         // glm::vec3 normal = glm::normalize(glm::cross(tangent, right));
-
-
-//         glm::vec3 center = path[i];
-//         glm::vec3 leftEdge  = center - right * halfW;
-//         glm::vec3 rightEdge = center + right * halfW;
-
-//         float v = float(i) / float(N - 1);
-
-//         pushVert(leftEdge,normal,0.0f,v);
-//         pushVert(rightEdge,normal,1.0f,v);
-
-//         glm::vec3 leftRailBase = leftEdge - right * railingOffset;
-//         glm::vec3 rightRailBase = rightEdge + right * railingOffset;
-
-//         glm::vec3 leftRailTop = leftRailBase + normal * railingHeight;
-//         glm::vec3 rightRailTop = rightRailBase + normal * railingHeight;
-
-//         float uRailLeft = -0.1f;
-//         float uRailRight = 1.1f;
-
-//         pushVert(leftRailBase,normal,uRailLeft,v);
-//         pushVert(leftRailTop,normal,uRailLeft,v);
-
-//         pushVert(rightRailBase,normal,uRailRight,v);
-//         pushVert(rightRailTop,normal,uRailRight,v);
-
-
-//         float boardThickness = 0.05f;
-
-//         glm::vec3 leftBottom = leftEdge - normal * boardThickness;
-//         glm::vec3 rightBottom = rightEdge - normal * boardThickness;
-
-//         pushVert(leftBottom,-normal,0.0f,v);
-//         pushVert(rightBottom,-normal,1.0f,v);
-
-//         glm::vec3 leftRailBase_back = leftRailBase + right * railingThickness;
-//         glm::vec3 leftRailTop_back = leftRailTop + right * railingThickness;
-
-//         glm::vec3 rightRailBase_back = rightRailBase - right * railingThickness;
-//         glm::vec3 rightRailTop_back = rightRailTop - right * railingThickness;
-
-
-
-//         pushVert(leftRailBase_back,normal,uRailLeft,v);
-//         pushVert(leftRailTop_back,normal,uRailLeft,v);
-
-//         pushVert(rightRailBase_back,normal,uRailRight,v);
-//         pushVert(rightRailTop_back,normal,uRailRight,v);
-//     }
-
-//     // -------------------------------------------------------------------
-//     // 4) Indices
-//     // -------------------------------------------------------------------
-//     const unsigned int vertsPer = 12;
-
-//     for (size_t i = 0; i < N - 1; ++i) {
-
-//         unsigned int a = i*vertsPer;
-//         unsigned int b = (i+1) * vertsPer;
-
-//         indices.push_back(a+0); indices.push_back(b+0); indices.push_back(a+1);
-//         indices.push_back(a+1); indices.push_back(b+0); indices.push_back(b+1);
-//         indices.push_back(a+6); indices.push_back(b+6); indices.push_back(a+7);
-//         indices.push_back(a+7); indices.push_back(b+6); indices.push_back(b+7);
-
-//         indices.push_back(a+0); indices.push_back(a+6); indices.push_back(b+0);
-//         indices.push_back(b+0); indices.push_back(a+6); indices.push_back(b+6);
-
-//         indices.push_back(a+1); indices.push_back(b+1); indices.push_back(a+7);
-//         indices.push_back(a+7); indices.push_back(b+1); indices.push_back(b+7);
-
-
-//         indices.push_back(a+2); indices.push_back(b+2); indices.push_back(a+3);
-//         indices.push_back(a+3); indices.push_back(b+2); indices.push_back(b+3);
-//         indices.push_back(a+8); indices.push_back(b+8); indices.push_back(a+9);
-//         indices.push_back(a+9); indices.push_back(b+8); indices.push_back(b+9);
-
-
-
-//         indices.push_back(a+4); indices.push_back(b+4); indices.push_back(a+5);
-//         indices.push_back(a+5); indices.push_back(b+4); indices.push_back(b+5);
-
-
-//         // Rail left side connectors:
-//         indices.push_back(a+2); indices.push_back(a+8); indices.push_back(b+2);
-//         indices.push_back(b+2); indices.push_back(a+8); indices.push_back(b+8);
-
-//         indices.push_back(a+3); indices.push_back(b+3); indices.push_back(a+9);
-//         indices.push_back(a+9); indices.push_back(b+3); indices.push_back(b+9);
-
-//         // Rail right back:
-//         indices.push_back(a+10); indices.push_back(b+10); indices.push_back(a+11);
-//         indices.push_back(a+11); indices.push_back(b+10); indices.push_back(b+11);
-
-//         // Rail right side connectors:
-//         indices.push_back(a+4); indices.push_back(a+10); indices.push_back(b+4);
-//         indices.push_back(b+4); indices.push_back(a+10); indices.push_back(b+10);
-
-//         indices.push_back(a+5); indices.push_back(b+5); indices.push_back(a+11);
-//         indices.push_back(a+11); indices.push_back(b+5); indices.push_back(b+11);
-//     }
-
-//     // -------------------------------------------------------------------
-//     // 5) Setup mesh
-//     // -------------------------------------------------------------------
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//                        {1, 3, GL_FLOAT, GL_FALSE, stride, 3*sizeof(float)},
-//                        {2, 2, GL_FLOAT, GL_FALSE, stride, 6*sizeof(float)},
-//                        {3, 3, GL_FLOAT, GL_FALSE, stride, 8*sizeof(float)},
-//                        };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-// Create a mesh that morphs from a flat board (t=0) to a half-pipe (t=1)
-// controlPoints : input control points (Catmull-Rom sampled)
-// width         : full board width (same convention as createFlatBoard)
-// pathResolution: number of samples per control segment (same convention)
-// arcSegments   : semicircle subdivisions for the half-pipe cross section
-// curveToPipeWeight : shaping exponent for the morph (1.0 = linear smoothstep)
 Mesh createMorphingHalfpipe(
     const std::vector<glm::vec3>& controlPoints,
     float width,
@@ -3088,9 +1094,7 @@ Mesh createMorphingHalfpipe(
     if (arcSegments < 2) arcSegments = 2;
     if (pathResolution == 0) pathResolution = 10;
 
-    // we'll interpret 'width' as the full board width (same as createFlatBoard).
-    // pipeRadius is half that width (so a flat board with width W will morph into a pipe radius = W/2).
-    // If you want width to be pipe radius instead, pass width*2 or tweak here.
+
     const float halfW = width * 0.5f;
     const float pipeRadius = halfW;
 
@@ -3329,194 +1333,6 @@ Mesh createMorphingHalfpipe(
 }
 
 
-
-
-// Mesh createBlendSegment(
-//     const TrackPiece& fromPiece, // piece we’re leaving
-//     const TrackPiece& toPiece,   // piece we’re entering
-//     unsigned int pathResolution,  // samples along blend
-//     float width)                  // halfpipe width
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     if (fromPiece.mesh.vertices.empty() || toPiece.mesh.vertices.empty()) return mesh;
-
-//     // Grab end of "from" piece
-//     glm::vec3 p0 = fromPiece.endPoint;
-//     glm::vec3 t0 = fromPiece.endTangent;
-//     glm::vec3 right0 = fromPiece.endRight;
-//     glm::vec3 up0 = fromPiece.endUp;
-
-//     // Grab start of "to" piece
-//     glm::vec3 p1 = toPiece.startPoint;
-//     glm::vec3 t1 = toPiece.startTangent;
-//     glm::vec3 right1 = toPiece.startRight;
-//     glm::vec3 up1 = toPiece.startUp;
-
-//     const unsigned int arcSegments = 8; // cross-section resolution
-//     const unsigned int ringVerts = arcSegments + 1;
-//     const unsigned int vertsPerRing = ringVerts + 4; // include rails if needed
-
-//     for (unsigned int i = 0; i <= pathResolution; ++i)
-//     {
-//         float blendT = float(i) / float(pathResolution);
-
-//         // Interpolate position along path
-//         glm::vec3 pos = glm::mix(p0, p1, blendT);
-
-//         // Interpolate tangent/right/up vectors
-//         glm::vec3 tangent = glm::normalize(glm::mix(t0, t1, blendT));
-//         glm::vec3 right   = glm::normalize(glm::mix(right0, right1, blendT));
-//         glm::vec3 up      = glm::normalize(glm::cross(tangent, right));
-
-//         // v-coordinate
-//         float v = blendT;
-
-//         // Generate halfpipe ring
-//         for (unsigned int a = 0; a <= arcSegments; ++a)
-//         {
-//             float arcT = float(a) / float(arcSegments);
-//             float angle = -glm::half_pi<float>() + arcT * glm::pi<float>();
-
-//             float x = width * std::sin(angle);
-//             float y = width * (1.0f - std::cos(angle));
-
-//             glm::vec3 vertPos = pos + right * x + up * y;
-
-//             glm::vec3 normal = glm::normalize(right * std::sin(angle) + up * std::cos(angle));
-
-//             // Push vertex (pos, normal, uv, color)
-//             vertices.insert(vertices.end(), {
-//                                                 vertPos.x, vertPos.y, vertPos.z,
-//                                                 normal.x, normal.y, normal.z,
-//                                                 arcT, v,
-//                                                 0.6f, 0.6f, 0.6f
-//                                             });
-//         }
-//     }
-
-//     // Build indices (same stitching as halfpipe)
-//     for (unsigned int i = 0; i < pathResolution; ++i)
-//     {
-//         unsigned int base = i * vertsPerRing;
-//         unsigned int next = (i + 1) * vertsPerRing;
-
-//         for (unsigned int a = 0; a < ringVerts - 1; ++a)
-//         {
-//             unsigned int b0 = base + a;
-//             unsigned int b1 = base + a + 1;
-//             unsigned int n0 = next + a;
-//             unsigned int n1 = next + a + 1;
-
-//             indices.push_back(b0); indices.push_back(n0); indices.push_back(b1);
-//             indices.push_back(b1); indices.push_back(n0); indices.push_back(n1);
-//         }
-//     }
-
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//         {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//         {1, 3, GL_FLOAT, GL_FALSE, stride, 3*sizeof(float)},
-//         {2, 2, GL_FLOAT, GL_FALSE, stride, 6*sizeof(float)},
-//         {3, 3, GL_FLOAT, GL_FALSE, stride, 8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& controlPoints,
-//     float width,
-//     unsigned int pathResolution)
-// {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
-
-//     if (controlPoints.size() < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     // 1) sample Catmull-Rom path
-//     std::vector<glm::vec3> path;
-//     for (size_t i = 0; i < controlPoints.size() - 1; ++i) {
-//         for (unsigned int j = 0; j < pathResolution; ++j) {
-//             float t = float(j) / float(pathResolution);
-
-//             glm::vec3 p0 = (i == 0) ? controlPoints[i] : controlPoints[i - 1];
-//             glm::vec3 p1 = controlPoints[i];
-//             glm::vec3 p2 = controlPoints[i + 1];
-//             glm::vec3 p3 = (i + 2 < controlPoints.size()) ? controlPoints[i + 2] : controlPoints[i + 1];
-
-//             path.push_back(catmullRom(p0, p1, p2, p3, t));
-//         }
-//     }
-//     path.push_back(controlPoints.back());
-
-//     const unsigned int vertsPerRing = 2; // left/right per path sample
-//     const glm::vec3 color(1.0f, 1.0f, 1.0f); // white
-
-//     // 2) generate vertices
-//     for (size_t i = 0; i < path.size(); ++i) {
-//         glm::vec3 forward = (i < path.size() - 1) ? glm::normalize(path[i + 1] - path[i])
-//                                                   : glm::normalize(path[i] - path[i - 1]);
-//         glm::vec3 up = glm::vec3(0,1,0);
-//         glm::vec3 right = glm::normalize(glm::cross(up, forward));
-//         up = glm::normalize(glm::cross(forward, right));
-
-//         glm::vec3 leftPos  = path[i] - right * halfW;
-//         glm::vec3 rightPos = path[i] + right * halfW;
-//         glm::vec3 normal = up;
-
-//         float v = float(i) / float(path.size() - 1);
-
-//         auto pushVert = [&](const glm::vec3& pos, const glm::vec3& n, float u, float v) {
-//             vertices.insert(vertices.end(), {
-//                 pos.x, pos.y, pos.z,
-//                 n.x, n.y, n.z,
-//                 u, v,
-//                 color.r, color.g, color.b
-//             });
-//         };
-
-//         pushVert(leftPos, normal, 0.0f, v);
-//         pushVert(rightPos, normal, 1.0f, v);
-//     }
-
-//     // 3) generate indices
-//     for (size_t i = 0; i < path.size() - 1; ++i) {
-//         unsigned int base = i * vertsPerRing;
-//         unsigned int next = (i + 1) * vertsPerRing;
-
-//         // two triangles per quad
-//         indices.push_back(base + 0); indices.push_back(next + 0); indices.push_back(base + 1);
-//         indices.push_back(base + 1); indices.push_back(next + 0); indices.push_back(next + 1);
-//     }
-
-//     // 4) setup mesh
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices  = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//         {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//         {1, 3, GL_FLOAT, GL_FALSE, stride, 3*sizeof(float)},
-//         {2, 2, GL_FLOAT, GL_FALSE, stride, 6*sizeof(float)},
-//         {3, 3, GL_FLOAT, GL_FALSE, stride, 8*sizeof(float)}
-//     };
-//     mesh.setup();
-
-//     return mesh;
-// }
-
-
 Mesh createTube(
     const std::vector<glm::vec3>& controlPoints,
     float radius,
@@ -3610,334 +1426,282 @@ Mesh createTube(
 }
 
 
+MeshInstance createFlatBoardLocal(
+    const std::vector<glm::vec3>& pathWorld,
+    float width)
+{
 
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& controlPoints,
-//     float width,
-//     unsigned int pathResolution)
-// {
-//     Mesh mesh;
-
-//     std::vector<float> verts;
-//     std::vector<unsigned int> inds;
-
-//     if (controlPoints.size() < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     // 1) sample Catmull-Rom path
-//     std::vector<glm::vec3> path;
-//     for (size_t i = 0; i < controlPoints.size() - 1; ++i) {
-//         for (unsigned int j = 0; j < pathResolution; ++j) {
-//             float t = float(j) / float(pathResolution);
-
-//             glm::vec3 p0 = (i == 0) ? controlPoints[i] : controlPoints[i - 1];
-//             glm::vec3 p1 = controlPoints[i];
-//             glm::vec3 p2 = controlPoints[i + 1];
-//             glm::vec3 p3 = (i + 2 < controlPoints.size()) ? controlPoints[i + 2] : controlPoints[i + 1];
-
-//             path.push_back(catmullRom(p0, p1, p2, p3, t));
-//         }
-//     }
-//     path.push_back(controlPoints.back());
-
-//     // 2) generate vertices
-//     for (size_t i = 0; i < path.size(); ++i) {
-//         glm::vec3 forward = (i < path.size() - 1) ? glm::normalize(path[i + 1] - path[i])
-//                                                   : glm::normalize(path[i] - path[i - 1]);
-//         glm::vec3 up = glm::vec3(0,1,0);
-
-//         glm::vec3 right = glm::normalize(glm::cross(up, forward));
-//         up = glm::normalize(glm::cross(forward, right));
-
-//         glm::vec3 leftPos  = path[i] - right * halfW;
-//         glm::vec3 rightPos = path[i] + right * halfW;
-//         glm::vec3 normal = up;
-
-//         float v = float(i) / float(path.size() - 1);
-
-//         auto pushVert = [&](const glm::vec3& p, const glm::vec3& n, float u, float v){
-//             verts.insert(verts.end(), { p.x, p.y, p.z, n.x, n.y, n.z, u, v, 1,1,1 });
-//         };
-
-//         pushVert(leftPos,  normal, 0.0f, v);
-//         pushVert(rightPos, normal, 1.0f, v);
-//     }
-
-//     // 3) generate indices
-//     for (unsigned int i = 0; i < path.size() - 1; ++i) {
-//         unsigned int i0 = i*2;
-//         unsigned int i1 = i0 + 1;
-//         unsigned int i2 = i1 + 1;
-//         unsigned int i3 = i0 + 2;
-//         inds.insert(inds.end(), { i0, i1, i2, i0, i2, i3 });
-//     }
-
-//     mesh.vertices = std::move(verts);
-//     mesh.indices  = std::move(inds);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//         {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//         {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//         {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//         {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
-//     };
-//     mesh.setup();
-
-//     return mesh;
-// }
-
-
-
-// Mesh createTube(
-//     const std::vector<glm::vec3>& controlPoints,
-//     float radius,
-//     unsigned int radialSegments)
-// {
-//     Mesh mesh;
-
-//     std::vector<float> verts;
-//     std::vector<unsigned int> inds;
-
-//     if (controlPoints.size() < 2) return mesh;
-
-//     // 1) sample Catmull-Rom path
-//     std::vector<glm::vec3> path;
-//     for (size_t i = 0; i < controlPoints.size() - 1; ++i) {
-//         for (unsigned int j = 0; j < radialSegments; ++j) {
-//             float t = float(j) / float(radialSegments);
-
-//             glm::vec3 p0 = (i == 0) ? controlPoints[i] : controlPoints[i - 1];
-//             glm::vec3 p1 = controlPoints[i];
-//             glm::vec3 p2 = controlPoints[i + 1];
-//             glm::vec3 p3 = (i + 2 < controlPoints.size()) ? controlPoints[i + 2] : controlPoints[i + 1];
-
-//             path.push_back(catmullRom(p0,p1,p2,p3,t));
-//         }
-//     }
-//     path.push_back(controlPoints.back());
-
-//     // 2) generate vertices
-//     for (size_t i = 0; i < path.size(); ++i) {
-//         glm::vec3 forward = (i < path.size() - 1) ? glm::normalize(path[i+1]-path[i])
-//                                                   : glm::normalize(path[i]-path[i-1]);
-//         glm::vec3 worldUp = glm::vec3(0,1,0);
-//         glm::vec3 right = glm::normalize(glm::cross(worldUp, forward));
-//         if (glm::length(right) < 1e-4f) right = glm::vec3(1,0,0);
-//         glm::vec3 up = glm::normalize(glm::cross(forward, right));
-
-//         for (unsigned int s = 0; s < radialSegments; ++s){
-//             float angle = float(s)/radialSegments * glm::two_pi<float>();
-//             glm::vec3 normal = glm::cos(angle)*right + glm::sin(angle)*up;
-//             glm::vec3 pos = path[i] + normal*radius;
-
-//             float u = float(s)/radialSegments;
-//             float v = float(i)/float(path.size()-1);
-
-//             verts.insert(verts.end(), { pos.x,pos.y,pos.z, normal.x,normal.y,normal.z, u,v, 1,1,1 });
-//         }
-//     }
-
-//     // 3) indices
-//     unsigned int ringSize = radialSegments;
-//     for (unsigned int i = 0; i < path.size() - 1; ++i){
-//         unsigned int ring0 = i * ringSize;
-//         unsigned int ring1 = ring0 + ringSize;
-
-//         for (unsigned int s = 0; s < radialSegments; ++s){
-//             unsigned int sNext = (s+1)%radialSegments;
-//             unsigned int i0 = ring0+s;
-//             unsigned int i1 = ring0+sNext;
-//             unsigned int i2 = ring1+sNext;
-//             unsigned int i3 = ring1+s;
-//             inds.insert(inds.end(), { i0,i1,i2, i0,i2,i3 });
-//         }
-//     }
-
-//     mesh.vertices = std::move(verts);
-//     mesh.indices  = std::move(inds);
-
-//     GLsizei stride = 11*sizeof(float);
-//     mesh.attributes = {
-//         {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//         {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//         {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//         {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
-//     };
-//     mesh.setup();
-
-//     return mesh;
-// }
-
-
-// Mesh createFlatBoard(
-//     const std::vector<glm::vec3>& path,
-//     float width,
-//     unsigned int resolution
-//     ){
-//     Mesh mesh;
-
-//     if (path.size() < 2) return mesh;
-
-//     const float halfW = width * 0.5f;
-
-//     std::vector<float> verts;
-//     std::vector<unsigned int> inds;
-
-//     for (size_t i = 0; i < path.size(); ++i) {
-
-//         glm::vec3 forward;
-//         if (i == path.size() - 1)
-//             forward = glm::normalize(path[i] - path[i - 1]);
-//         else
-//             forward = glm::normalize(path[i + 1] - path[i]);
-
-//         glm::vec3 up = glm::vec3(0,1,0);
-
-//         glm::vec3 right = glm::normalize(glm::cross(up, forward));
-//         up = glm::normalize(glm::cross(forward, right)); // re-orthogonalize
-
-//         glm::vec3 leftPos  = path[i] - right * halfW;
-//         glm::vec3 rightPos = path[i] + right * halfW;
-
-//         glm::vec3 normal = up;
-
-//         // UVs
-//         float v = float(i) / float(path.size() - 1);
-
-//         // Vertex packing helper:
-//         auto pushVert = [&](const glm::vec3& p, const glm::vec3& n, float u, float v) {
-//             verts.insert(verts.end(), {
-//                                           p.x, p.y, p.z,
-//                                           n.x, n.y, n.z,
-//                                           u, v,
-//                                           1.0f, 1.0f, 1.0f      // white color
-//                                       });
-//         };
-
-//         pushVert(leftPos,  normal, 0.0f, v);
-//         pushVert(rightPos, normal, 1.0f, v);
-//     }
-
-//     // Indices: two triangles per segment
-//     unsigned int vertsPerRow = 2;
-
-//     for (unsigned int i = 0; i < path.size() - 1; i++) {
-//         unsigned int i0 = i * vertsPerRow;
-//         unsigned int i1 = i0 + 1;
-//         unsigned int i2 = i1 + 1;
-//         unsigned int i3 = i0 + 2;
-
-//         inds.insert(inds.end(), {
-//                                     i0, i1, i2,
-//                                     i0, i2, i3
-//                                 });
-//     }
-
-//     mesh.vertices = std::move(verts);
-//     mesh.indices  = std::move(inds);
-
-//     GLsizei stride = 11 * sizeof(float);
-
-//     mesh.attributes = {
-//         {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//         {1, 3, GL_FLOAT, GL_FALSE, stride, 3*sizeof(float)},
-//         {2, 2, GL_FLOAT, GL_FALSE, stride, 6*sizeof(float)},
-//         {3, 3, GL_FLOAT, GL_FALSE, stride, 8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
-
-
-// Mesh createTube(
-//     const std::vector<glm::vec3>& path,
-//     float radius,
-//     unsigned int radialSegments)
-// {
-//     Mesh mesh;
-
-//     if (path.size() < 2) return mesh;
-
-//     std::vector<float> verts;
-//     std::vector<unsigned int> inds;
-
-//     for (size_t i = 0; i < path.size(); ++i) {
-
-//         glm::vec3 forward;
-//         if (i == path.size() - 1)
-//             forward = glm::normalize(path[i] - path[i - 1]);
-//         else
-//             forward = glm::normalize(path[i + 1] - path[i]);
-
-//         glm::vec3 worldUp = glm::vec3(0, 1, 0);
-
-//         glm::vec3 right = glm::normalize(glm::cross(worldUp, forward));
-//         if (glm::length(right) < 1e-4f)
-//             right = glm::vec3(1,0,0);
-
-//         glm::vec3 up = glm::normalize(glm::cross(forward, right));
-
-//         // Build ring
-//         for (unsigned int s = 0; s < radialSegments; ++s){
-//             float angle = (float(s) / radialSegments) * glm::two_pi<float>();
-
-//             glm::vec3 normal = glm::cos(angle) * right + glm::sin(angle) * up;
-//             glm::vec3 pos = path[i] + normal * radius;
-
-//             float u = float(s) / float(radialSegments);
-//             float v = float(i) / float(path.size() - 1);
-
-//             verts.insert(verts.end(), {
-//                                           pos.x, pos.y, pos.z,
-//                                           normal.x, normal.y, normal.z,
-//                                           u, v,
-//                                           1,1,1
-//                                       });
-//         }
-//     }
-
-//     // Indices
-//     const unsigned int ringSize = radialSegments;
-
-//     for (unsigned int i = 0; i < path.size() - 1; ++i) {
-//         unsigned int ring0 = i * ringSize;
-//         unsigned int ring1 = ring0 + ringSize;
-
-//         for (unsigned int s = 0; s < radialSegments; ++s){
-//             unsigned int sNext = (s + 1) % radialSegments;
-
-//             unsigned int i0 = ring0 + s;
-//             unsigned int i1 = ring0 + sNext;
-//             unsigned int i2 = ring1 + sNext;
-//             unsigned int i3 = ring1 + s;
-
-//             inds.insert(inds.end(), {
-//                                         i0, i1, i2,
-//                                         i0, i2, i3
-//                                     });
-//         }
-//     }
-
-//     mesh.vertices = std::move(verts);
-//     mesh.indices  = std::move(inds);
-
-//     GLsizei stride = 11 * sizeof(float);
-
-//     mesh.attributes = {
-//         {0, 3, GL_FLOAT, GL_FALSE, stride, 0},
-//         {1, 3, GL_FLOAT, GL_FALSE, stride, 3*sizeof(float)},
-//         {2, 2, GL_FLOAT, GL_FALSE, stride, 6*sizeof(float)},
-//         {3, 3, GL_FLOAT, GL_FALSE, stride, 8*sizeof(float)}
-//     };
-
-//     mesh.setup();
-//     return mesh;
-// }
+    // std::cout << "[DEBUG] enter createFlatBoardLocal, samples = "
+    //           << pathWorld.size() << "\n";
 
+    MeshInstance out;
 
+    const size_t Nsamples = pathWorld.size();
+    if (Nsamples < 2)
+        return out;
+
+    // if (Nsamples < 3) {
+    //     std::cout << "[FLATBOARD] Warning: Path has too few samples: " << Nsamples << "\n";
+    // }
 
+
+    // ---------------------------------------------------
+    // 1. Pick local origin (root of the board)
+    // ---------------------------------------------------
+    glm::vec3 root = pathWorld.front();
+
+    // Convert to LOCAL coordinates
+    std::vector<glm::vec3> path(Nsamples);
+    for (size_t i = 0; i < Nsamples; i++)
+        path[i] = pathWorld[i] - root;
+
+    // ---------------------------------------------------
+    // 2. Build simple T/R/U frames in LOCAL SPACE
+    // ---------------------------------------------------
+    std::vector<glm::vec3> T(Nsamples);
+    std::vector<glm::vec3> R(Nsamples);
+    std::vector<glm::vec3> U(Nsamples);
+
+    for (size_t i = 0; i < Nsamples; i++)
+    {
+        glm::vec3 t;
+
+        if (i == 0)
+            t = path[1] - path[0];
+        else if (i == Nsamples - 1)
+            t = path[i] - path[i - 1];
+        else
+            t = path[i + 1] - path[i - 1];
+
+        if (glm::length(t) < 1e-6f)
+            t = glm::vec3(0,0,1);
+
+        t = glm::normalize(t);
+
+        glm::vec3 worldUp(0,1,0);
+        if (fabs(glm::dot(worldUp, t)) > 0.9f)
+            worldUp = glm::vec3(1,0,0);
+
+        glm::vec3 r = glm::normalize(glm::cross(worldUp, t));
+        glm::vec3 u = glm::normalize(glm::cross(t, r));
+
+        T[i] = t;
+        R[i] = r;
+        U[i] = u;
+    }
+
+    // ---------------------------------------------------
+    // 3. Build the mesh (LOCAL space)
+    // ---------------------------------------------------
+    Mesh mesh;
+    std::vector<float> verts;
+    std::vector<unsigned int> inds;
+
+    float halfW = width * 0.5f;
+
+    float boardThickness   = 0.05f;
+    float railingHeight    = 1.9f;
+    float railingOffset    = 0.05f;
+    float railingThickness = 0.04f;
+
+    auto pushV = [&](glm::vec3 p, glm::vec3 n, float u, float v)
+    {
+        verts.insert(verts.end(),
+                     { p.x,p.y,p.z,
+                      n.x,n.y,n.z,
+                      u,v,
+                      1,1,1 });
+    };
+
+    // --- arc length for UV v-mapping ---
+    std::vector<float> cum(Nsamples);
+    cum[0] = 0.f;
+    float totalLen = 0.f;
+
+
+
+    for (size_t i = 1; i < Nsamples; i++) {
+        totalLen += glm::length(path[i] - path[i-1]);
+        cum[i] = totalLen;
+    }
+    if (totalLen < 1e-5f) totalLen = 1.0f;
+
+
+
+    float wallHeight = boardThickness;          // height of the side wall
+    float uScaleWalls = totalLen / wallHeight;  // how many repeats along the length
+    float uSpanWalls  = width / wallHeight;     // how much “u” between left and right
+
+    const int VERTS_PER = 16;
+
+    for (size_t i = 0; i < Nsamples; i++)
+    {
+        glm::vec3 c = path[i];   // local center!
+        glm::vec3 r = R[i];
+        glm::vec3 u = U[i];
+        glm::vec3 t = T[i];
+
+        float vPath = cum[i] / totalLen;
+
+        glm::vec3 leftEdge  = c - r * halfW;
+        glm::vec3 rightEdge = c + r * halfW;
+
+        // --- top ---
+        pushV(leftEdge,  u, 0, vPath);
+        pushV(rightEdge, u, 1, vPath);
+
+        // railing front
+        glm::vec3 leftBase  = leftEdge  - r * railingOffset;
+        glm::vec3 rightBase = rightEdge + r * railingOffset;
+        glm::vec3 leftTop   = leftBase  + u * railingHeight;
+        glm::vec3 rightTop  = rightBase + u * railingHeight;
+
+        pushV(leftBase,  u, 0, 0);
+        pushV(leftTop,   u, 0, 1);
+        pushV(rightBase, u, 1, 0);
+        pushV(rightTop,  u, 1, 1);
+
+        // bottom
+        glm::vec3 leftBot  = leftEdge  - u * boardThickness;
+        glm::vec3 rightBot = rightEdge - u * boardThickness;
+
+        pushV(leftBot,  -u, 0, vPath);
+        pushV(rightBot, -u, 1, vPath);
+
+        // glm::vec3 leftBaseB  = leftBase  - r * railingThickness;
+        // glm::vec3 leftTopB   = leftTop   - r * railingThickness;
+        // glm::vec3 rightBaseB = rightBase + r * railingThickness;
+        // glm::vec3 rightTopB  = rightTop  + r * railingThickness;
+
+
+        glm::vec3 leftBaseB  = leftBase  + r * railingThickness;
+        glm::vec3 leftTopB   = leftTop   + r * railingThickness;
+        glm::vec3 rightBaseB = rightBase - r * railingThickness;
+        glm::vec3 rightTopB  = rightTop  - r * railingThickness;
+
+
+
+        // // railing back
+        // glm::vec3 leftBaseB  = leftBase  + r * railingThickness;
+        // glm::vec3 leftTopB   = leftTop   + r * railingThickness;
+        // glm::vec3 rightBaseB = rightBase - r * railingThickness;
+        // glm::vec3 rightTopB  = rightTop  - r * railingThickness;
+
+        pushV(leftBaseB,  u, 0, 0);
+        pushV(leftTopB,   u, 0, 1);
+        pushV(rightBaseB, u, 1, 0);
+        pushV(rightTopB,  u, 1, 1);
+
+        // // side walls
+        // pushV(leftEdge,  -r, 0, 1);
+        // pushV(leftBot,   -r, 0, 0);
+        // pushV(rightEdge,  r, 1, 1);
+        // pushV(rightBot,   r, 1, 0);
+
+        // // side walls with correct UV scaling (fix stretching)
+        // pushV(leftEdge,  -r, vPath * uScaleWalls,              1.0f);
+        // pushV(leftBot,   -r, vPath * uScaleWalls,              0.0f);
+        // pushV(rightEdge,  r, vPath * uScaleWalls + uSpanWalls, 1.0f);
+        // pushV(rightBot,   r, vPath * uScaleWalls + uSpanWalls, 0.0f);
+
+        // SIDE WALLS (correct, proven mapping)
+        float u0 = vPath * (totalLen / boardThickness);    // scaled along track
+        float u1 = u0 + (width / boardThickness);          // across width
+
+        // TEMP DEBUG PRINT ----------------------
+        if (i < 5) {   // print first 5 samples only
+            std::cout << "[WALL] i=" << i
+                      << "  vPath=" << vPath
+                      << "  u0=" << u0
+                      << "  u1=" << u1
+                      << "  span=" << u1 - u0
+                      << "\n";
+        }
+
+        if (i < 5) {
+            float segLen = (i > 0) ? glm::length(path[i] - path[i-1]) : 0.f;
+            std::cout << "  path[" << i << "] segment length = " << segLen << "\n";
+        }
+
+
+
+        pushV(leftEdge,  -r, u0, 1.0f);
+        pushV(leftBot,   -r, u0, 0.0f);
+        pushV(rightEdge,  r, u1, 1.0f);
+        pushV(rightBot,   r, u1, 0.0f);
+
+
+    }
+
+    // indices (unchanged)
+    for (size_t i = 0; i < Nsamples - 1; i++)
+    {
+        unsigned int a = i * VERTS_PER;
+        unsigned int b = (i+1) * VERTS_PER;
+
+        inds.insert(inds.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
+        inds.insert(inds.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
+        inds.insert(inds.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
+        inds.insert(inds.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
+
+        inds.insert(inds.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
+        inds.insert(inds.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
+
+        inds.insert(inds.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
+        inds.insert(inds.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
+
+        inds.insert(inds.end(), { a+2,a+8,b+2, b+2,a+8,b+8 });
+        inds.insert(inds.end(), { a+3,b+3,a+9, a+9,b+3,b+9 });
+
+        inds.insert(inds.end(), { a+4,a+10,b+4, b+4,a+10,b+10 });
+        inds.insert(inds.end(), { a+5,b+5,a+11, a+11,b+5,b+11 });
+    }
+
+    mesh.vertices = std::move(verts);
+    mesh.indices  = std::move(inds);
+
+    GLsizei stride = 11*sizeof(float);
+    mesh.attributes = {
+        {0,3,GL_FLOAT,GL_FALSE,stride,0},
+        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
+        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
+        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
+    };
+
+
+    if (mesh.vertices.size() % 11 != 0) {
+        std::cout << "[ERROR] Vertex misalignment: mesh.vertices.size() = "
+                  << mesh.vertices.size() << " (not divisible by 11!)\n";
+    }
+    else {
+        std::cout << "[OK] Vertex array aligned (" << mesh.vertices.size() << " floats)\n";
+    }
+
+
+
+    mesh.setup();
+
+    out.mesh  = std::move(mesh);
+    out.model = glm::translate(glm::mat4(1.0f), root);
+
+
+    float minU = 1e9, maxU = -1e9;
+    float minV = 1e9, maxV = -1e9;
+
+    for (size_t k = 0; k < out.mesh.vertices.size(); k += 11) {
+        float u = out.mesh.vertices[k + 6];
+        float v = out.mesh.vertices[k + 7];
+        minU = std::min(minU, u);
+        maxU = std::max(maxU, u);
+        minV = std::min(minV, v);
+        maxV = std::max(maxV, v);
+    }
+
+    std::cout << "[UV RANGE] U=[" << minU << ", " << maxU
+              << "]   V=[" << minV << ", " << maxV << "]\n";
+
+
+    return out;
+}
 
 

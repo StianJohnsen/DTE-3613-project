@@ -121,27 +121,53 @@ bool Renderer::init() {
         }
     });
 
+    // glfwSetCursorPosCallback(window, [](GLFWwindow* win, double xpos, double ypos) {
+    //     auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(win));
+    //     renderer->inputManager.updateMousePosition(xpos, ypos);
+
+    //     if (!renderer->mouseCaptured) return;
+
+    //     // if(renderer->followSphere) return;
+
+    //     if (renderer->firstMouse) {
+    //         renderer->lastX = xpos;
+    //         renderer->lastY = ypos;
+    //         renderer->firstMouse = false;
+    //     }
+
+    //     float xoffset = xpos - renderer->lastX;
+    //     float yoffset = renderer->lastY - ypos;
+    //     renderer->lastX = xpos;
+    //     renderer->lastY = ypos;
+
+    //     renderer->camera.ProcessMouseMovement(xoffset, yoffset);
+    // });
+
     glfwSetCursorPosCallback(window, [](GLFWwindow* win, double xpos, double ypos) {
-        auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(win));
-        renderer->inputManager.updateMousePosition(xpos, ypos);
+        Renderer* r = static_cast<Renderer*>(glfwGetWindowUserPointer(win));
 
-        if (!renderer->mouseCaptured) return;
+        // If mouse is not captured → ignore movement
+        if (!r->mouseCaptured)
+            return;
 
-        if(renderer->followSphere) return;
-
-        if (renderer->firstMouse) {
-            renderer->lastX = xpos;
-            renderer->lastY = ypos;
-            renderer->firstMouse = false;
+        // Prevent jump on first frame
+        if (r->firstMouse) {
+            r->lastX = xpos;
+            r->lastY = ypos;
+            r->firstMouse = false;
+            return;
         }
 
-        float xoffset = xpos - renderer->lastX;
-        float yoffset = renderer->lastY - ypos;
-        renderer->lastX = xpos;
-        renderer->lastY = ypos;
+        float dx = xpos - r->lastX;
+        float dy = r->lastY - ypos;  // inverted y
 
-        renderer->camera.ProcessMouseMovement(xoffset, yoffset);
+        r->lastX = xpos;
+        r->lastY = ypos;
+
+        // Allow mouse look in both follow mode AND free mode
+        r->camera.ProcessMouseMovement(dx, dy);
     });
+
 
     glfwSetScrollCallback(window, [](GLFWwindow* win, double xoffset, double yoffset) {
         auto* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(win));
@@ -169,11 +195,11 @@ bool Renderer::init() {
 
 
     // ---------- SHARED GRID CONFIG (lanes & spheres) ----------
-    const int   N            = 4;      // number of lanes (spheres per row)
+    const int   nLanes            = 4;      // number of lanes (spheres per row)
     const float sphereRadius = 1.0f;
     const float leftMargin   = 0.5f;
     const float rightMargin  = 0.5f;
-    const int   numRowsObstacles = 4;  // rows of obstacles on each board (except first/last)
+    const int   rowsPerBoard = 4;  // rows of obstacles on each board (except first/last)
 
 
     int currentObstacleType = 0;
@@ -194,20 +220,23 @@ bool Renderer::init() {
         glm::vec3 right = glm::vec3(1,0,0);
         glm::vec3 up    = glm::normalize(glm::cross(fwd, right));
 
-        p->generateControlPoints(pos, fwd, right, up);
+        p->generateControlPoints(pos, fwd);
         p->build();
 
         // -------- 2. ADD TRACK TO RENDER + PHYSICS --------
+
+        MeshInstance board = createFlatBoardLocal(p->smoothedPath,p->trackRadius * 2.f);
+
         Renderable r;
-        r.mesh  = p->mesh;
-        r.model = glm::mat4(1.0f);
+        r.mesh  = board.mesh;
+        r.model = board.model;
         r.doubleSided = true;
         r.mesh.textureId = checkersBoardTexture;
         r.useTexture = true;
 
         trackPieces.push_back(p);
         staticObjects.push_back(r);
-        createStaticTriangleMeshFromMesh(p->mesh);
+        createStaticTriangleMeshFromMeshWithTransform(r.mesh,r.model);
 
         // ==================================================
         //  STAGGERED OBSTACLES FOR THIS BOARD
@@ -224,148 +253,150 @@ bool Renderer::init() {
         if (i > 0 && i < numBoards - 1)
         {
 
-            // ==================================================
-            // CLEAN OBSTACLE GENERATION
-            // ==================================================
-            int numLanes = N;
-            float halfW  = p->trackRadius;
+            int M = p->smoothedPath.size();
+            float halfW = p->trackRadius;
 
-            // Lane center positions for spheres (same logic as your spawn code)
-            std::vector<float> laneX(numLanes);
-            float usable = (2.0f * halfW) - leftMargin - rightMargin - 2.0f * sphereRadius;
+            std::vector<float> laneX(nLanes);
+            float usable = (2.f * halfW) - leftMargin - rightMargin - 2.f * sphereRadius;
 
-            for (int k = 0; k < numLanes; ++k) {
-                float tLane = (numLanes == 1) ? 0.5f : float(k) / float(numLanes - 1);
+            for (int k = 0; k < nLanes; ++k) {
+                float tLane = (nLanes == 1) ? 0.5f : float(k) / float(nLanes-1);
                 laneX[k] = -halfW + leftMargin + sphereRadius + tLane * usable;
             }
 
-            // Lane spacing (distance between two adjacent lanes)
-            float laneSpacing = (numLanes > 1) ? (laneX[1] - laneX[0]) : 0.0f;
+            float laneSpacing = (nLanes > 1) ? (laneX[1] - laneX[0]) : 0.f;
 
-            // How far to shift obstacles
-            float rightShift = laneSpacing * 0.55f;   // move obstacles toward the right lane side
-            float upShift    = 0.12f * length;        // move obstacles *up* along the track
+            float upShift = 0.12f * length;
 
-            int M = p->smoothedPath.size();
-            int numObstacles = numLanes - 1;          // one obstacle between each pair of lanes
 
-            // Spawn rows
-            for (int row = 0; row < numRowsObstacles; ++row)
-            {
-                int idx = int(float(row + 1) / float(numRowsObstacles + 1) * M);
+            for (int row = 0; row < rowsPerBoard; ++row){
+                // int idx = int( float(row+1) / float(rowsPerBoard+1) * M );
+
+
+                // int idx = int( float(row+1) / float(rowsPerBoard+1) * M );
+                // idx = std::min(idx, M - 2);  // ← safest
+
+
+                int idx = int(float(row + 1) / float(rowsPerBoard + 1) * M);
+
+                // BEFORE clamping — debug
+                std::cout << "[IDX] raw=" << idx
+                          << "  M=" << M
+                          << "  row=" << row << "\n";
+
+                idx = std::clamp(idx, 0, M - 1);
+
+                // AFTER clamping
+                std::cout << "      clamped=" << idx << "\n";
+
 
                 glm::vec3 center = p->smoothedPath[idx];
-                // glm::vec3 Nvec   = p->frameN[idx];
-                // glm::vec3 Bvec   = p->frameB[idx];
-                // glm::vec3 Tvec   = p->frameT[idx];
 
-                glm::vec3 T;  // tangent
-                if (idx == 0) T = p->smoothedPath[1] - p->smoothedPath[0];
-                else if (idx == M-1) T = p->smoothedPath[M-1] - p->smoothedPath[M-2];
-                else T = p->smoothedPath[idx+1] - p->smoothedPath[idx-1];
+                //--------------------------------------------------
+                // Compute T, R, U at this path index
+                //--------------------------------------------------
+                glm::vec3 T, R, U;
+                getFrameAtIndex(p->smoothedPath, idx, T, R, U);
 
-                T = glm::normalize(T);
-
-                glm::vec3 W(0,1,0);
-                if (fabs(glm::dot(W,T)) > 0.9f) W = glm::vec3(1,0,0);
-
-                glm::vec3 R = glm::normalize(glm::cross(W,T));  // right
-                glm::vec3 U = glm::normalize(glm::cross(T,R));  // UP (true track normal)
-
-
-                // Orientation basis for obstacles
+                //--------------------------------------------------
+                // Orientation basis matrix
+                //--------------------------------------------------
                 glm::mat4 basis(1.0f);
-                basis[0] = glm::vec4(R, 0.0f);  // right
-                basis[1] = glm::vec4(U, 0.0f);  // up
-                basis[2] = glm::vec4(T, 0.0f);  // forward
-                // basis[0] = glm::vec4(Nvec, 0.0f);
-                // basis[1] = glm::vec4(Bvec, 0.0f);
-                // basis[2] = glm::vec4(Tvec, 0.0f);
+                basis[0] = glm::vec4(R, 0);
+                basis[1] = glm::vec4(U, 0);
+                basis[2] = glm::vec4(T, 0);
 
+                //--------------------------------------------------
                 // Spawn obstacles between lanes
-                for (int k = 0; k < numObstacles; ++k)
-                {
-                    // midpoint between lanes
-                    float xPos = 0.5f * (laneX[k] + laneX[k + 1]);
+                //--------------------------------------------------
+                int obstacles = nLanes - 1;
 
 
-                    float staggerShift = (row % 2 == 1) ? +0.25f * laneSpacing : -0.25f * laneSpacing;
-                    xPos += staggerShift;
-                    // stagger pattern on odd rows
-                    // if (row % 2 == 1)
-                    //     xPos += laneSpacing * 0.5f;
+                for (int k = 0; k < obstacles; ++k){
+                    float xPos = 0.5f * (laneX[k] + laneX[k+1]);
 
-                    // slight push into sphere path
-                    // xPos += laneSpacing * 0.15f;
+                    // stagger: left/right
+                    float stagger = (row % 2 == 0) ? -0.25f * laneSpacing
+                                                   : +0.25f * laneSpacing;
+                    xPos += stagger;
 
-                    // final right shift
-                    // xPos -= rightShift;
-
-                    // choose obstacle type
+                    //--------------------------------------------------
+                    // Select obstacle mesh
+                    //--------------------------------------------------
                     Mesh mesh;
-                    float height;
-                    switch (boardType)
+                    float height = 2.5f;
+
+                    switch(boardType)
                     {
-                    case 0: mesh = createWall(1.0f, 2.5f, 0.25f);             height = 2.5f; break;
-                    case 1: mesh = createCylinder(0.5f, 2.5f, 16);            height = 2.5f; break;
-                    case 2: mesh = createPyramid(1.5f, 2.0f);                 height = 2.0f; break;
-                    case 3: mesh = createTriangularPrism(1.5f, 2.5f, 1.0f);   height = 2.5f; break;
+                    case 0: mesh = createWall(1.f, 2.5f, 0.25f); break;
+                    case 1: mesh = createCylinder(0.5f, 2.5f, 16); break;
+                    case 2: mesh = createPyramid(1.5f, 2.0f); height = 2.0f; break;
+                    case 3: mesh = createTriangularPrism(1.5f, 2.5f, 1.0f); break;
                     }
 
 
-                    float boardThickness = 0.05f;   // MUST MATCH TRACK BUILDER
-                    float lift = height * 0.5f + boardThickness;
-                    // float lift = height * 0.5f + 0.02f;
+                    float boardThickness = 0.05f;
+                    float lift = height*0.5f + boardThickness;
 
-                    // final world position
+                    //--------------------------------------------------
+                    // Final position
+                    //--------------------------------------------------
                     glm::vec3 obsPos =
                         center +
                         R * xPos +
-                        T * upShift +     // move forward along track
-                        U * lift;         // lift above board
+                        T * upShift +
+                        U * lift;
 
                     glm::mat4 model =
                         glm::translate(glm::mat4(1.0f), obsPos) *
                         basis;
 
+
+                    //--------------------------------------------------
+                    // Add obstacle
+                    //--------------------------------------------------
                     Renderable obstacle;
                     obstacle.mesh = mesh;
                     obstacle.model = model;
                     obstacle.doubleSided = true;
                     obstacle.mesh.textureId = checkersBoardTexture;
 
-
                     staticObjects.push_back(obstacle);
                     createStaticTriangleMeshFromMeshWithTransform(obstacle.mesh, obstacle.model);
                 }
             }
-
-
         }
 
 
-        // -------- 3. CREATE WALL FOR THIS BOARD --------
-        int last = (int)p->smoothedPath.size() - 1;
+        //--------------------------------------------------------
+        // 4. END-WALL FOR THIS BOARD
+        //--------------------------------------------------------
+        int last = p->smoothedPath.size() - 1;
+        glm::vec3 T, R, U;
+        getFrameAtIndex(p->smoothedPath, last, T, R, U);
 
-        glm::vec3 N = p->frameN[last];
-        glm::vec3 B = p->frameB[last];
-        glm::vec3 T = p->frameT[last];
+        glm::vec3 wallPos =
+            slopesDown
+                ? p->smoothedPath[last] - T * offset
+                : p->smoothedPath[0]    + T * offset;
 
-        glm::vec3 wallPos;
-        if (slopesDown)
-            wallPos = p->endPoint - T * offset;
-        else wallPos = p->startPoint + T * offset;
 
-        float wallWidth     = p->trackRadius * 2.0f;
-        float wallHeight    = 3.0f;
+
+        float wallWidth     = p->trackRadius * 2.f;
+        float wallHeight    = 3.f;
         float wallThickness = 0.25f;
 
-        glm::mat4 rot(1.0f);
-        rot[0] = glm::vec4(N, 0.0f);
-        rot[1] = glm::vec4(B, 0.0f);
-        rot[2] = glm::vec4(T, 0.0f);
+        glm::mat4 rot(1.f);
+        rot[0] = glm::vec4(R,0);
+        rot[1] = glm::vec4(U,0);
+        rot[2] = glm::vec4(T,0);
 
-        glm::mat4 wallModel = glm::translate(glm::mat4(1.0f), wallPos) * rot;
+        glm::mat4 wallModel =
+            glm::translate(glm::mat4(1.0f), wallPos) *
+            rot;
+
+
+
 
         Renderable wall;
         wall.mesh = createEndWall(wallWidth, wallHeight, wallThickness);
@@ -376,91 +407,149 @@ bool Renderer::init() {
         staticObjects.push_back(wall);
         createStaticTriangleMeshFromMeshWithTransform(wall.mesh, wall.model);
 
-        // -------- 4. UPDATE POSITION FOR NEXT BOARD --------
-        pos = p->endPoint;
-        pos.y -= 15.0f;
+        //--------------------------------------------------------
+        // 5. ADVANCE pos TO START NEXT PIECE
+        //--------------------------------------------------------
+        pos = p->smoothedPath.back();
+        pos.y -= 15.f;
 
-        if ((i % 2) == 0)
-            pos.z = 15.0f;
-        else
-            pos.z = 0.0f;
+        pos.z = (i % 2 == 0) ? 15.f : 0.f;
+
     }
 
 
+    // =====================================================
+    //  CREATE SPHERES (after track is fully built)
+    // =====================================================
+
+    std::cout << "[SPHERES] Creating spheres...\n";
+
+    const int nSpheres = nLanes;     // 1 sphere per lane
+    const float radius = sphereRadius;
+
+    Mesh sphereMesh = createSphere(radius, 36, 18);
+
+    TrackPiece* startBoard = trackPieces[0];
+    int M = startBoard->smoothedPath.size();
+
+    // safe index somewhere near the start
+    int idx0 = std::min(5, M - 1);
+    glm::vec3 center = startBoard->smoothedPath[idx0];
+
+    // compute frame at this index
+    glm::vec3 T0, R0, U0;
+    getFrameAtIndex(startBoard->smoothedPath, idx0, T0, R0, U0);
+
+    // lane center positions
+    std::vector<float> laneX(nLanes);
+    float halfW   = startBoard->trackRadius;
+    float usable  = (2.f * halfW) - leftMargin - rightMargin - 2.f * radius;
+
+    for (int k = 0; k < nLanes; ++k) {
+        float tLane = (nLanes == 1) ? 0.5f : float(k) / float(nLanes - 1);
+        laneX[k] = -halfW + leftMargin + radius + tLane * usable;
+    }
+
+    for (int k = 0; k < nSpheres; ++k) {
+
+        glm::vec3 pos =
+            center +
+            R0 * laneX[k] +
+            U0 * (radius + 0.1f);   // lift above board
+
+        glm::mat4 model = glm::translate(glm::mat4(1.f), pos);
+
+        Renderable sphereObj;
+        sphereObj.mesh = sphereMesh;
+        sphereObj.model = model;
+        sphereObj.doubleSided = true;
+        sphereObj.mesh.textureId = checkersBoardTexture;
+        sphereObj.useTexture = true;
+
+        dynamicObjects.push_back(sphereObj);
+        rigidBodyToRenderable.push_back(dynamicObjects.size() - 1);
+
+        btRigidBody* body = createSphereRigidBody(radius, model, 1.0f);
+        physicsBodies.push_back(body);
+
+        if (k == playerSphereIndex) {
+            std::cout << "[PLAYER] sphere is lane " << k << "\n";
+        }
+    }
+
+    std::cout << "[SPHERES] Done. Count = " << physicsBodies.size() << "\n";
 
 
 
-    TrackPiece* track = trackPieces[0];
-    float t = 0.15f; // 25% down the track
-    size_t i = size_t(t * (track->smoothedPath.size() - 1));
 
-    glm::vec3 center = track->smoothedPath[i];
-    glm::vec3 right  = track->frameN[i];
-    glm::vec3 up     = track->frameB[i];
 
-    float halfW = track->trackRadius;    // = width/2  (10.0f)
+    // TrackPiece* track = trackPieces[0];
+    // float t = 0.15f; // 25% down the track
+    // size_t i = size_t(t * (track->smoothedPath.size() - 1));
+
+    // glm::vec3 center = track->smoothedPath[i];
+    // glm::vec3 right  = track->frameR[i];
+    // glm::vec3 up     = track->frameT[i];
+
+    // float halfW = track->trackRadius;    // = width/2  (10.0f)
     // float leftMargin  = 1.0f;
     // float rightMargin = 1.0f;
 
     // float sphereRadius = 1.0f;
 
     // edge positions in world space
-    glm::vec3 leftEdge  = center - right * halfW;
-    glm::vec3 rightEdge = center + right * halfW;
+
 
     // distance available for sphere centers
-    float usable = (2*halfW) - leftMargin - rightMargin - 2*sphereRadius;
+    // float usable = (2*halfW) - leftMargin - rightMargin - 2*sphereRadius;
 
-    // uniform interpolation parameter
-    float spacing = (N > 1) ? usable / (N-1) : 0.0f;
+    // // uniform interpolation parameter
+    // float spacing = (nLanes > 1) ? usable / (nLanes-1) : 0.0f;
 
-    Mesh sphereMesh = createSphere(sphereRadius, 36, 18);
-
-
-    for (int k = 0; k < N; ++k) {
+    // Mesh sphereMesh = createSphere(sphereRadius, 36, 18);
 
 
-        // t goes 0 → 1 over row
-        float t = (N == 1) ? 0.5f : float(k) / float(N - 1);
-
-        // sphere center along board
-        float xLocal = -halfW + leftMargin + sphereRadius + t * usable;
-
-        glm::vec3 spawnPos =
-            center
-            + right * xLocal
-            + up * (sphereRadius + 0.02f);
-
-        Renderable sphereObj;
-        sphereObj.mesh = sphereMesh;
-        sphereObj.model = glm::translate(glm::mat4(1.0f), spawnPos);
-        sphereObj.mesh.textureId = checkersBoardTexture;
+    // for (int k = 0; k < nLanes; ++k) {
 
 
-        dynamicObjects.push_back(sphereObj);
-        rigidBodyToRenderable.push_back(dynamicObjects.size() - 1);
-        physicsBodies.push_back(createSphereRigidBody(sphereRadius, sphereObj.model, 1.0f));
+    //     // t goes 0 → 1 over row
+    //     float t = (nLanes == 1) ? 0.5f : float(k) / float(nLanes - 1);
 
-
-        if (k == playerSphereIndex) {
-            std::cout << "[PLAYER] sphere is at index " << k << "\n";
-        }
-    }
+    //     // sphere center along board
+    //     float xLocal = -halfW + leftMargin + sphereRadius + t * usable;
 
 
 
-    glm::vec3 loopPos = glm::vec3(0, 20, 20);
-    glm::vec3 loopDir = glm::vec3(0, 0, 1);  // forward
+    //     Renderable sphereObj;
+    //     sphereObj.mesh = sphereMesh;
 
-    LoopPiece* loopPiece = new LoopPiece(12.0f, 96);
-    loopPiece->generateControlPoints(loopPos, loopDir);
+    //     sphereObj.mesh.textureId = checkersBoardTexture;
 
-    // Add like any other track piece
 
-    Renderable loopRenderable;
-    loopRenderable.mesh = loopPiece->mesh;
-    loopRenderable.model = glm::translate(glm::mat4(1.0f),loopPos);
-    staticObjects.push_back(loopRenderable);
+    //     dynamicObjects.push_back(sphereObj);
+    //     rigidBodyToRenderable.push_back(dynamicObjects.size() - 1);
+    //     physicsBodies.push_back(createSphereRigidBody(sphereRadius, sphereObj.model, 1.0f));
+
+
+    //     if (k == playerSphereIndex) {
+    //         std::cout << "[PLAYER] sphere is at index " << k << "\n";
+    //     }
+    // }
+
+
+
+    // glm::vec3 loopPos = glm::vec3(0, 20, 20);
+    // glm::vec3 loopDir = glm::vec3(0, 0, 1);  // forward
+
+    // LoopPiece* loopPiece = new LoopPiece(12.0f, 96);
+    // loopPiece->generateControlPoints(loopPos, loopDir);
+
+    // // Add like any other track piece
+
+    // Renderable loopRenderable;
+    // loopRenderable.mesh = loopPiece->mesh;
+    // loopRenderable.model = glm::translate(glm::mat4(1.0f),loopPos);
+    // staticObjects.push_back(loopRenderable);
     // createStaticTriangleMeshFromMesh(loopPiece->mesh);
 
 
@@ -512,27 +601,56 @@ bool Renderer::init() {
 
 
     // === FOLLOW CAMERA ===
-    int sphereIdx = 0;
+
+
+    if (!physicsBodies.empty()) {
+
+        std::cout << "Not empty\n";
+        int sphereIdx = playerSphereIndex;
+
+        btTransform trans;
+        physicsBodies[sphereIdx]->getMotionState()->getWorldTransform(trans);
+
+        glm::mat4 sphereModel = btTransformToGlm(trans);
+        glm::vec3 spherePos   = glm::vec3(sphereModel[3]);
+
+        glm::vec3 camOffset(-6.0f, 3.0f, -10.0f);
+
+        camera.Position = spherePos + camOffset;
+        camera.Front    = glm::normalize(spherePos - camera.Position);
+        camera.Right    = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
+        camera.Up       = glm::normalize(glm::cross(camera.Right, camera.Front));
+
+
+        followSphere = true;
+        mouseCaptured = true;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        firstMouse = true;
+    }
+    else {
+        std::cout << "[WARNING] No spheres exist — skipping follow-camera init.\n";
+        followSphere = false;
+    }
 
     // Get sphere transform
-    btTransform trans;
-    physicsBodies[sphereIdx]->getMotionState()->getWorldTransform(trans);
-    glm::mat4 sphereModel = btTransformToGlm(trans);
+    // btTransform trans;
+    // physicsBodies[sphereIdx]->getMotionState()->getWorldTransform(trans);
+    // glm::mat4 sphereModel = btTransformToGlm(trans);
 
-    glm::vec3 spherePos = glm::vec3(sphereModel[3]);  // sphere world position
+    // glm::vec3 spherePos = glm::vec3(sphereModel[3]);  // sphere world position
 
-    // Camera offset relative to sphere
-    glm::vec3 camOffset(-6.0f, 3.0f, -10.0f); // tune this
+    // // Camera offset relative to sphere
+    // glm::vec3 camOffset(-6.0f, 3.0f, -10.0f); // tune this
 
-    // Set camera position
-    camera.Position = spherePos + camOffset;
+    // // Set camera position
+    // camera.Position = spherePos + camOffset;
 
-    // Compute new camera forward direction
-    camera.Front = glm::normalize(spherePos - camera.Position);
+    // // Compute new camera forward direction
+    // camera.Front = glm::normalize(spherePos - camera.Position);
 
-    // Rebuild Right and Up manually
-    camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
-    camera.Up    = glm::normalize(glm::cross(camera.Right, camera.Front));
+    // // Rebuild Right and Up manually
+    // camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
+    // camera.Up    = glm::normalize(glm::cross(camera.Right, camera.Front));
 
 
     // debugDrawer = new BulletDebugDrawer();
@@ -568,44 +686,45 @@ void Renderer::updateDeltaTime() {
 
 void Renderer::processInput() {
 
-
     static bool fWasPressed = false;
     static bool pWasPressed = false;
 
     bool fPressed = inputManager.isKeyPressed(GLFW_KEY_F);
     bool pPressed = inputManager.isKeyPressed(GLFW_KEY_P);
 
-
-    if(pPressed && !pWasPressed){
+    // -----------------------------------------------------------
+    // Toggle physics (P)
+    // -----------------------------------------------------------
+    if (pPressed && !pWasPressed) {
         physicsEnabled = !physicsEnabled;
-        // std::cout << "[PHOTO MODE] Physics "
-        //           << (physicsEnabled ? "ENABLED\n" : "DISABLED — objects frozen\n");
     }
     pWasPressed = pPressed;
 
+    // -----------------------------------------------------------
+    // Toggle followSphere mode (F)
+    // -----------------------------------------------------------
     if (fPressed && !fWasPressed) {
         followSphere = !followSphere;
 
+        // Lock cursor ALWAYS when F is toggled
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        mouseCaptured = true;
+
+        // Avoid camera jump
+        firstMouse = true;
+
+        // If leaving follow mode, sync yaw/pitch from current camera direction
         if (!followSphere) {
-            // ===== Leaving follow mode → sync yaw/pitch to current camera =====
             camera.Yaw   = glm::degrees(atan2(camera.Front.z, camera.Front.x));
             camera.Pitch = glm::degrees(asin(camera.Front.y));
-
-            // prevent jump on first mouse move
-            firstMouse = true;
-        }
-
-        if (followSphere) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);      // release mouse
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);    // recapture mouse
         }
     }
-
     fWasPressed = fPressed;
 
-
-    if(!followSphere){
+    // -----------------------------------------------------------
+    // Non-follow (free movement)
+    // -----------------------------------------------------------
+    if (!followSphere) {
         if (inputManager.isKeyPressed(GLFW_KEY_W))
             camera.ProcessKeyboard(FORWARD, deltaTime);
         if (inputManager.isKeyPressed(GLFW_KEY_S))
@@ -620,22 +739,94 @@ void Renderer::processInput() {
             camera.ProcessKeyboard(DOWN, deltaTime);
     }
 
-
-
-
-
-
+    // -----------------------------------------------------------
+    // ESC → release mouse
+    // -----------------------------------------------------------
     if (inputManager.isKeyPressed(GLFW_KEY_ESCAPE) && mouseCaptured) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         mouseCaptured = false;
     }
 
-    // Handle scroll input (zoom)
+    // -----------------------------------------------------------
+    // Scroll (zoom)
+    // -----------------------------------------------------------
     if (inputManager.getScrollY() != 0.0) {
         camera.ProcessMouseScroll(inputManager.getScrollY());
         inputManager.resetScroll();
     }
 }
+
+
+// void Renderer::processInput() {
+
+
+//     static bool fWasPressed = false;
+//     static bool pWasPressed = false;
+
+//     bool fPressed = inputManager.isKeyPressed(GLFW_KEY_F);
+//     bool pPressed = inputManager.isKeyPressed(GLFW_KEY_P);
+
+
+//     if(pPressed && !pWasPressed){
+//         physicsEnabled = !physicsEnabled;
+//         // std::cout << "[PHOTO MODE] Physics "
+//         //           << (physicsEnabled ? "ENABLED\n" : "DISABLED — objects frozen\n");
+//     }
+//     pWasPressed = pPressed;
+
+//     if (fPressed && !fWasPressed) {
+//         followSphere = !followSphere;
+
+//         if (!followSphere) {
+//             // ===== Leaving follow mode → sync yaw/pitch to current camera =====
+//             camera.Yaw   = glm::degrees(atan2(camera.Front.z, camera.Front.x));
+//             camera.Pitch = glm::degrees(asin(camera.Front.y));
+
+//             // prevent jump on first mouse move
+//             firstMouse = true;
+//         }
+
+//         if (followSphere) {
+//             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);      // release mouse
+//         } else {
+//             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);    // recapture mouse
+//         }
+//     }
+
+//     fWasPressed = fPressed;
+
+
+//     if(!followSphere){
+//         if (inputManager.isKeyPressed(GLFW_KEY_W))
+//             camera.ProcessKeyboard(FORWARD, deltaTime);
+//         if (inputManager.isKeyPressed(GLFW_KEY_S))
+//             camera.ProcessKeyboard(BACKWARD, deltaTime);
+//         if (inputManager.isKeyPressed(GLFW_KEY_A))
+//             camera.ProcessKeyboard(LEFT, deltaTime);
+//         if (inputManager.isKeyPressed(GLFW_KEY_D))
+//             camera.ProcessKeyboard(RIGHT, deltaTime);
+//         if (inputManager.isKeyPressed(GLFW_KEY_SPACE))
+//             camera.ProcessKeyboard(UP, deltaTime);
+//         if (inputManager.isKeyPressed(GLFW_KEY_LEFT_SHIFT))
+//             camera.ProcessKeyboard(DOWN, deltaTime);
+//     }
+
+
+
+
+
+
+//     if (inputManager.isKeyPressed(GLFW_KEY_ESCAPE) && mouseCaptured) {
+//         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+//         mouseCaptured = false;
+//     }
+
+//     // Handle scroll input (zoom)
+//     if (inputManager.getScrollY() != 0.0) {
+//         camera.ProcessMouseScroll(inputManager.getScrollY());
+//         inputManager.resetScroll();
+//     }
+// }
 
 void Renderer::renderFrame() {
     glClearColor(0.2f, 0.0f, 0.3f, 1.0f);
@@ -712,41 +903,41 @@ void Renderer::renderFrame() {
         glDisable(GL_CULL_FACE);
     }
 
-    if (!raceFinished && !physicsBodies.empty() && trackPieces.size() > 0)
-    {
-        TrackPiece* lastBoard = trackPieces.back();
+    // if (!raceFinished && !physicsBodies.empty() && trackPieces.size() > 0)
+    // {
+    //     TrackPiece* lastBoard = trackPieces.back();
 
-        glm::vec3 finishPoint = lastBoard->endPoint;
-        glm::vec3 Tfinish     = glm::normalize(lastBoard->frameT[0]);
+    //     glm::vec3 finishPoint = lastBoard->endPoint;
+    //     glm::vec3 Tfinish     = glm::normalize(lastBoard->frameT[0]);
 
-        for (int i = 0; i < physicsBodies.size(); ++i)
-        {
-            btTransform trans;
-            physicsBodies[i]->getMotionState()->getWorldTransform(trans);
+    //     for (int i = 0; i < physicsBodies.size(); ++i)
+    //     {
+    //         btTransform trans;
+    //         physicsBodies[i]->getMotionState()->getWorldTransform(trans);
 
-            glm::mat4 model = btTransformToGlm(trans);
-            glm::vec3 spherePos = glm::vec3(model[3]);
+    //         glm::mat4 model = btTransformToGlm(trans);
+    //         glm::vec3 spherePos = glm::vec3(model[3]);
 
-            float dist = glm::dot(spherePos - finishPoint, Tfinish);
+    //         float dist = glm::dot(spherePos - finishPoint, Tfinish);
 
-            if (dist > 0.0f)
-            {
-                raceFinished = true;
-                winnerIndex = i;
+    //         if (dist > 0.0f)
+    //         {
+    //             raceFinished = true;
+    //             winnerIndex = i;
 
-                if(i == playerSphereIndex){
-                    playerWon = true;
-                    std::cout << "\n Congratulations! Your sphere won the race!\n";
-                }
-                else{
-                    playerWon = false;
-                    std::cout << "\n Too bad! Sphere " << i << " won.\n";
-                }
+    //             if(i == playerSphereIndex){
+    //                 playerWon = true;
+    //                 std::cout << "\n Congratulations! Your sphere won the race!\n";
+    //             }
+    //             else{
+    //                 playerWon = false;
+    //                 std::cout << "\n Too bad! Sphere " << i << " won.\n";
+    //             }
 
-                break;
-            }
-        }
-    }
+    //             break;
+    //         }
+    //     }
+    // }
 
     Shader& sphereShader = shaderManager.get("sphere");
     sphereShader.use();
@@ -1059,4 +1250,77 @@ void Renderer::addObstacle(
 }
 
 
+// void Renderer::getFrameAtIndex(
+//     const std::vector<glm::vec3> &path,
+//     int i,
+//     glm::vec3 &T,
+//     glm::vec3 &R,
+//     glm::vec3 &U)
+// {
+//     int N = path.size();
 
+//     if (i == 0)
+//         T = glm::normalize(path[1] - path[0]);
+//     else if (i == N - 1)
+//         T = glm::normalize(path[N - 1] - path[N - 2]);
+//     else
+//         T = glm::normalize(path[i + 1] - path[i - 1]);
+
+//     glm::vec3 worldUp(0,1,0);
+//     if (fabs(glm::dot(worldUp, T)) > 0.9f)
+//         worldUp = glm::vec3(1,0,0);
+
+//     R = glm::normalize(glm::cross(worldUp, T));
+//     U = glm::normalize(glm::cross(T, R));
+// }
+
+
+void Renderer::getFrameAtIndex(
+    const std::vector<glm::vec3> &path,
+    int i,
+    glm::vec3 &T,
+    glm::vec3 &R,
+    glm::vec3 &U)
+{
+    int N = path.size();
+
+    if (N < 2) {
+        std::cout << "[FRAME ERROR] path.size() = " << N
+                  << " — cannot compute frame\n";
+        T = glm::vec3(0,0,1);
+        R = glm::vec3(1,0,0);
+        U = glm::vec3(0,1,0);
+        return;
+    }
+
+    if (i < 0 || i >= N) {
+        std::cout << "[FRAME ERROR] index " << i
+                  << " is out of range (0.." << (N-1) << ")\n";
+        i = std::clamp(i, 0, N - 1);
+    }
+
+    std::cout << "[FRAME] path size = " << N << "  index = " << i << "\n";
+
+    // ==== SAFE TANGENT COMPUTATION ====
+    if (i == 0) {
+        std::cout << "  Using forward diff: path[1] - path[0]\n";
+        T = glm::normalize(path[1] - path[0]);
+    }
+    else if (i == N - 1) {
+        std::cout << "  Using backward diff: path[N-1] - path[N-2]\n";
+        T = glm::normalize(path[N - 1] - path[N - 2]);
+    }
+    else {
+        std::cout << "  Using central diff: path[i+1] - path[i-1]\n";
+        T = glm::normalize(path[i + 1] - path[i - 1]);
+    }
+
+    glm::vec3 worldUp(0,1,0);
+    if (fabs(glm::dot(worldUp, T)) > 0.9f) {
+        std::cout << "  WARNING: worldUp parallel to T — using fallback axis\n";
+        worldUp = glm::vec3(1,0,0);
+    }
+
+    R = glm::normalize(glm::cross(worldUp, T));
+    U = glm::normalize(glm::cross(T, R));
+}
