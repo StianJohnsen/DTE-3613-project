@@ -69,8 +69,15 @@ void main(void)
     if(useTexture){
         vec3 texColor = texture(texture_diffuse,texcoord).rgb;
         result = (result * texColor);
+            // FragColor = vec4(texcoord, 0.0, 1.0);
+
+        // FragColor = vec4(texture(texture_diffuse, texcoord).rgb, 1.0);
     }
 
+    // FragColor = vec4(texture(texture_diffuse, texcoord).rgb, 1.0);
+
         FragColor = vec4(result,1.0);
+    // FragColor = vec4(texcoord, 0.0, 1.0);
+
 
 }

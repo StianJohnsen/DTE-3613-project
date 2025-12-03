@@ -23,7 +23,7 @@ public:
     GLuint cubemapTexture = 0;
 
     bool load(const std::vector<std::string>& faces) {
-        cubemapTexture = loadCubemap(faces);
+        cubemapTexture = texutils::loadCubemap(faces);
         if (!cubemapTexture) {
             std::cerr << "Failed to load cubemap texture" << std::endl;
             return false;

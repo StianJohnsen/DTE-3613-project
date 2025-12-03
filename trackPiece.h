@@ -492,6 +492,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/norm.hpp>
+#include <iostream>
 
 #include "meshPipelineSetup.h"
 
@@ -670,105 +671,257 @@ protected:
     }
 
 
+
     void computeFrames() {
-        frameT.clear();
-        frameN.clear();
-        frameB.clear();
+        size_t Np = smoothedPath.size();
+        if (Np < 2) return;
 
-        const size_t N = smoothedPath.size();
-        if (N < 2)
-            return;
+        frameT.resize(Np);
+        frameN.resize(Np);
+        frameB.resize(Np);
 
-        frameT.resize(N);
-        frameN.resize(N);
-        frameB.resize(N);
+        // 1. Tangent
+        for (size_t i = 0; i < Np - 1; i++)
+            frameT[i] = glm::normalize(smoothedPath[i+1] - smoothedPath[i]);
+        frameT[Np-1] = frameT[Np-2];
 
-        if (hasIncoming) {
-            // --- CONTINUOUS STITCHING CASE ---
-            // Use the EXACT same frame as the previous piece at the seam.
-            frameT[0] = glm::normalize(incomingT);
-            frameN[0] = glm::normalize(incomingR);
-            frameB[0] = glm::normalize(incomingU);
-        } else {
-            // --- FIRST PIECE / NO PARENT ---
-            glm::vec3 T0 = glm::normalize(smoothedPath[1] - smoothedPath[0]);
-            frameT[0]    = T0;
+        // 2. Initial frame
+        glm::vec3 T0 = frameT[0];
+        glm::vec3 up(0,1,0);
+        if (fabs(glm::dot(T0, up)) > 0.9f)
+            up = glm::vec3(1,0,0);
 
-            glm::vec3 arbitraryUp(0,1,0);
-            if (fabs(glm::dot(T0, arbitraryUp)) > 0.9f)
-                arbitraryUp = glm::vec3(1,0,0);
+        frameN[0] = glm::normalize(glm::cross(up, T0));
+        frameB[0] = glm::normalize(glm::cross(T0, frameN[0]));
 
-            glm::vec3 R0 = glm::normalize(glm::cross(arbitraryUp, T0));
-            glm::vec3 U0 = glm::normalize(glm::cross(T0, R0));
+        // 3. Parallel transport
+        for (size_t i = 1; i < Np; i++) {
+            glm::vec3 t_prev = frameT[i-1];
+            glm::vec3 t_cur  = frameT[i];
 
-            frameN[0] = R0;
-            frameB[0] = U0;
-        }
-
-        // --- Parallel transport along this piece ---
-        for (size_t i = 1; i < N; ++i) {
-            glm::vec3 t_prev = frameT[i - 1];
-            glm::vec3 t      = glm::normalize(smoothedPath[i] - smoothedPath[i - 1]);
-
-            frameT[i] = t;
-
-            glm::vec3 v = glm::cross(t_prev, t);
-            float      c = glm::dot(t_prev, t);
+            glm::vec3 v = glm::cross(t_prev, t_cur);
+            float c = glm::dot(t_prev, t_cur);
 
             if (glm::length(v) < 1e-6f) {
-                // no rotation
-                frameN[i] = frameN[i - 1];
-            } else {
-                float s = glm::length(v);
-                glm::vec3 axis = v / s;
-                float angle = atan2(s, c);
-
-                glm::mat3 K(
-                    0,        -axis.z,  axis.y,
-                    axis.z,    0,      -axis.x,
-                    -axis.y,   axis.x,  0
-                    );
-
-                glm::mat3 R =
-                    glm::mat3(1.0f) * glm::cos(angle)
-                    + (1.0f - glm::cos(angle)) * glm::outerProduct(axis, axis)
-                    + glm::sin(angle) * K;
-
-                frameN[i] = glm::normalize(R * frameN[i - 1]);
+                frameN[i] = frameN[i-1];
+                frameB[i] = frameB[i-1];
+                continue;
             }
 
-            frameB[i] = glm::cross(frameT[i], frameN[i]);
+            float s = glm::length(v);
+            glm::vec3 axis = v / s;
+            float angle = atan2(s, c);
 
-
-            // Apply transition twist if this piece requests it
-            // if (twistStart != twistEnd) {
-            //     float t = float(i) / float(N - 1);
-            //     float roll = glm::mix(twistStart, twistEnd, t * t * (3 - 2 * t)); // smoothstep
-
-            //     // Rotate N and B around T
-            //     glm::mat4 Rtwist = glm::rotate(glm::mat4(1.0f), roll, frameT[i]);
-
-            //     frameN[i] = glm::vec3(Rtwist * glm::vec4(frameN[i], 1.0f));
-            //     frameB[i] = glm::vec3(Rtwist * glm::vec4(frameB[i], 1.0f));
-            // }
-
-            // ------------------------------------------------------
-            // APPLY OPTIONAL TWIST (roll interpolation along piece)
-            // ------------------------------------------------------
-            if (twistStart != 0.0f || twistEnd != 0.0f)
-            {
-                float u = float(i) / float(N - 1);
-                float roll = glm::mix(twistStart, twistEnd, u * u * (3 - 2*u)); // smoothstep
-
-                glm::mat4 Rtwist = glm::rotate(glm::mat4(1.0f), roll, frameT[i]);
-
-                frameN[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameN[i], 0.0f)));
-                frameB[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameB[i], 0.0f)));
-            }
-
-
+            frameN[i] = glm::rotate(frameN[i-1], angle, axis);
+            frameB[i] = glm::rotate(frameB[i-1], angle, axis);
         }
     }
+
+
+
+    // void computeFrames() {
+    //     frameT.clear();
+    //     frameN.clear();
+    //     frameB.clear();
+
+    //     const size_t N = smoothedPath.size();
+    //     if (N < 2)
+    //         return;
+
+    //     frameT.resize(N);
+    //     frameN.resize(N);
+    //     frameB.resize(N);
+
+    //     // ---------- Initialize first frame ----------
+    //     if (hasIncoming) {
+    //         frameT[0] = glm::normalize(incomingT);
+    //         frameN[0] = glm::normalize(incomingR);
+    //         frameB[0] = glm::normalize(incomingU);
+    //     } else {
+    //         glm::vec3 T0 = glm::normalize(smoothedPath[1] - smoothedPath[0]);
+
+    //         glm::vec3 worldUp(0, 1, 0);
+    //         if (fabs(glm::dot(worldUp, T0)) > 0.9f)
+    //             worldUp = glm::vec3(1, 0, 0);
+
+    //         glm::vec3 N0 = glm::normalize(glm::cross(worldUp, T0));
+    //         glm::vec3 B0 = glm::normalize(glm::cross(T0, N0));
+
+    //         frameT[0] = T0;
+    //         frameN[0] = N0;
+    //         frameB[0] = B0;
+    //     }
+
+    //     // ---------- Parallel transport ----------
+    //     for (size_t i = 1; i < N; i++)
+    //     {
+    //         // 1. tangent vector
+    //         glm::vec3 t = smoothedPath[i] - smoothedPath[i - 1];
+    //         float len = glm::length(t);
+
+    //         if (len < 1e-8f) {
+    //             // Degenerate segment → copy previous frame
+    //             frameT[i] = frameT[i - 1];
+    //             frameN[i] = frameN[i - 1];
+    //             frameB[i] = frameB[i - 1];
+    //             continue;
+    //         }
+
+    //         t = glm::normalize(t);
+
+    //         glm::vec3 t_prev = frameT[i - 1];
+
+    //         // Avoid sudden flips (collinearity check)
+    //         if (glm::dot(t, t_prev) < 0.0f) {
+    //             t = -t;
+    //         }
+
+    //         frameT[i] = t;
+
+    //         // 2. Minimal rotation from t_prev → t
+    //         glm::vec3 axis = glm::cross(t_prev, t);
+    //         float axisLen = glm::length(axis);
+
+    //         if (axisLen < 1e-6f) {
+    //             // No significant rotation → keep previous N,B
+    //             frameN[i] = frameN[i - 1];
+    //         } else {
+    //             axis /= axisLen;
+    //             float dotVal = glm::clamp(glm::dot(t_prev, t), -1.0f, 1.0f);
+    //             float angle = acos(dotVal);
+
+    //             // Stable rotate
+    //             frameN[i] = glm::rotate(frameN[i - 1], angle, axis);
+    //         }
+
+    //         // 3. Recompute B
+    //         frameN[i] = glm::normalize(frameN[i] - glm::dot(frameN[i], frameT[i]) * frameT[i]);
+    //         frameB[i] = glm::normalize(glm::cross(frameT[i], frameN[i]));
+
+    //         // 4. Apply twist if needed
+    //         if (twistStart != 0.0f || twistEnd != 0.0f)
+    //         {
+    //             float u = float(i) / float(N - 1);
+    //             float roll = glm::mix(twistStart, twistEnd, u * u * (3 - 2 * u));
+
+    //             glm::mat4 Rtwist = glm::rotate(glm::mat4(1.0f), roll, frameT[i]);
+
+    //             frameN[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameN[i], 0.0f)));
+    //             frameB[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameB[i], 0.0f)));
+    //         }
+    //     }
+
+
+    //     std::cout << "Going into the loop... \n";
+    //     for (size_t i = 0; i < frameN.size(); i++) {
+    //         float dotR = glm::dot(frameN[0], frameN[i]);
+    //         if (dotR < 0.95f)
+    //             std::cout << "Frame drift at sample " << i << " dot=" << dotR << "\n";
+    //     }
+
+
+    // }
+
+
+    // void computeFrames() {
+    //     frameT.clear();
+    //     frameN.clear();
+    //     frameB.clear();
+
+    //     const size_t N = smoothedPath.size();
+    //     if (N < 2)
+    //         return;
+
+    //     frameT.resize(N);
+    //     frameN.resize(N);
+    //     frameB.resize(N);
+
+    //     if (hasIncoming) {
+    //         // --- CONTINUOUS STITCHING CASE ---
+    //         // Use the EXACT same frame as the previous piece at the seam.
+    //         frameT[0] = glm::normalize(incomingT);
+    //         frameN[0] = glm::normalize(incomingR);
+    //         frameB[0] = glm::normalize(incomingU);
+    //     } else {
+    //         // --- FIRST PIECE / NO PARENT ---
+    //         glm::vec3 T0 = glm::normalize(smoothedPath[1] - smoothedPath[0]);
+    //         frameT[0]    = T0;
+
+    //         glm::vec3 arbitraryUp(0,1,0);
+    //         if (fabs(glm::dot(T0, arbitraryUp)) > 0.9f)
+    //             arbitraryUp = glm::vec3(1,0,0);
+
+    //         glm::vec3 R0 = glm::normalize(glm::cross(arbitraryUp, T0));
+    //         glm::vec3 U0 = glm::normalize(glm::cross(T0, R0));
+
+    //         frameN[0] = R0;
+    //         frameB[0] = U0;
+    //     }
+
+    //     // --- Parallel transport along this piece ---
+    //     for (size_t i = 1; i < N; ++i) {
+    //         glm::vec3 t_prev = frameT[i - 1];
+    //         glm::vec3 t      = glm::normalize(smoothedPath[i] - smoothedPath[i - 1]);
+
+    //         frameT[i] = t;
+
+    //         glm::vec3 v = glm::cross(t_prev, t);
+    //         float      c = glm::dot(t_prev, t);
+
+    //         if (glm::length(v) < 1e-6f) {
+    //             // no rotation
+    //             frameN[i] = frameN[i - 1];
+    //         } else {
+    //             float s = glm::length(v);
+    //             glm::vec3 axis = v / s;
+    //             float angle = atan2(s, c);
+
+    //             glm::mat3 K(
+    //                 0,        -axis.z,  axis.y,
+    //                 axis.z,    0,      -axis.x,
+    //                 -axis.y,   axis.x,  0
+    //                 );
+
+    //             glm::mat3 R =
+    //                 glm::mat3(1.0f) * glm::cos(angle)
+    //                 + (1.0f - glm::cos(angle)) * glm::outerProduct(axis, axis)
+    //                 + glm::sin(angle) * K;
+
+    //             frameN[i] = glm::normalize(R * frameN[i - 1]);
+    //         }
+
+    //         frameB[i] = glm::cross(frameT[i], frameN[i]);
+
+
+    //         // Apply transition twist if this piece requests it
+    //         // if (twistStart != twistEnd) {
+    //         //     float t = float(i) / float(N - 1);
+    //         //     float roll = glm::mix(twistStart, twistEnd, t * t * (3 - 2 * t)); // smoothstep
+
+    //         //     // Rotate N and B around T
+    //         //     glm::mat4 Rtwist = glm::rotate(glm::mat4(1.0f), roll, frameT[i]);
+
+    //         //     frameN[i] = glm::vec3(Rtwist * glm::vec4(frameN[i], 1.0f));
+    //         //     frameB[i] = glm::vec3(Rtwist * glm::vec4(frameB[i], 1.0f));
+    //         // }
+
+    //         // ------------------------------------------------------
+    //         // APPLY OPTIONAL TWIST (roll interpolation along piece)
+    //         // ------------------------------------------------------
+    //         if (twistStart != 0.0f || twistEnd != 0.0f)
+    //         {
+    //             float u = float(i) / float(N - 1);
+    //             float roll = glm::mix(twistStart, twistEnd, u * u * (3 - 2*u)); // smoothstep
+
+    //             glm::mat4 Rtwist = glm::rotate(glm::mat4(1.0f), roll, frameT[i]);
+
+    //             frameN[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameN[i], 0.0f)));
+    //             frameB[i] = glm::normalize(glm::vec3(Rtwist * glm::vec4(frameB[i], 0.0f)));
+    //         }
+
+
+    //     }
+    // }
 
 
     // Implemented by child

@@ -10,6 +10,9 @@
         glm::mat4 model{1.0f};
         bool doubleSided = false;
 
+        GLuint textureID = 0;
+        bool useTexture = false;
+
         void draw(Shader& shader) const {
 
             if(doubleSided)
@@ -18,6 +21,13 @@
                 glEnable(GL_CULL_FACE);
 
             shader.setMat4("model", model);
+            shader.setBool("useTexture",useTexture);
+
+            if(useTexture && textureID != 0){
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, textureID);
+            }
+
             material.apply(shader);
             mesh.draw(shader.getId());
         }

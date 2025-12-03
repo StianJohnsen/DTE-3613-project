@@ -40,6 +40,7 @@ Mesh createTube(
 
 
 Mesh createWall(float width, float height, float thickness);
+Mesh createEndWall(float width, float height, float thickness);
 Mesh createCylinder(float radius, float height, int segments);
 Mesh createPyramid(float baseSize, float height);
 Mesh createTriangularPrism(float width, float height, float depth);

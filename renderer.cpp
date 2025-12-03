@@ -11,6 +11,8 @@
 // WINDOWS
 #define SHADER_PATH(base) ("../../DTE-3613_part_2/shaders/" base)
 #define ASSETS_SKYBOX_PATH(base) ("../../DTE-3613_part_2/assets/skybox/" base)
+#define ASSETS_TEXTURE_PATH(base) ("../../DTE-3613_part_2/assets/textures/" base)
+
 
 
 Renderer::Renderer(int width, int height, const std::string& title)
@@ -154,6 +156,8 @@ bool Renderer::init() {
     shaderManager.load("skybox", SHADER_PATH("skybox.vert"), SHADER_PATH("skybox.frag"));
 
 
+    checkersBoardTexture = texutils::loadTexture(ASSETS_TEXTURE_PATH("checker_grid.jpg"));
+
 
     int   numBoards   = 6;      // how many flatboards you want
     float length      = 25.0f;
@@ -198,6 +202,8 @@ bool Renderer::init() {
         r.mesh  = p->mesh;
         r.model = glm::mat4(1.0f);
         r.doubleSided = true;
+        r.mesh.textureId = checkersBoardTexture;
+        r.useTexture = true;
 
         trackPieces.push_back(p);
         staticObjects.push_back(r);
@@ -249,15 +255,32 @@ bool Renderer::init() {
                 int idx = int(float(row + 1) / float(numRowsObstacles + 1) * M);
 
                 glm::vec3 center = p->smoothedPath[idx];
-                glm::vec3 Nvec   = p->frameN[idx];
-                glm::vec3 Bvec   = p->frameB[idx];
-                glm::vec3 Tvec   = p->frameT[idx];
+                // glm::vec3 Nvec   = p->frameN[idx];
+                // glm::vec3 Bvec   = p->frameB[idx];
+                // glm::vec3 Tvec   = p->frameT[idx];
+
+                glm::vec3 T;  // tangent
+                if (idx == 0) T = p->smoothedPath[1] - p->smoothedPath[0];
+                else if (idx == M-1) T = p->smoothedPath[M-1] - p->smoothedPath[M-2];
+                else T = p->smoothedPath[idx+1] - p->smoothedPath[idx-1];
+
+                T = glm::normalize(T);
+
+                glm::vec3 W(0,1,0);
+                if (fabs(glm::dot(W,T)) > 0.9f) W = glm::vec3(1,0,0);
+
+                glm::vec3 R = glm::normalize(glm::cross(W,T));  // right
+                glm::vec3 U = glm::normalize(glm::cross(T,R));  // UP (true track normal)
+
 
                 // Orientation basis for obstacles
                 glm::mat4 basis(1.0f);
-                basis[0] = glm::vec4(Nvec, 0.0f);
-                basis[1] = glm::vec4(Bvec, 0.0f);
-                basis[2] = glm::vec4(Tvec, 0.0f);
+                basis[0] = glm::vec4(R, 0.0f);  // right
+                basis[1] = glm::vec4(U, 0.0f);  // up
+                basis[2] = glm::vec4(T, 0.0f);  // forward
+                // basis[0] = glm::vec4(Nvec, 0.0f);
+                // basis[1] = glm::vec4(Bvec, 0.0f);
+                // basis[2] = glm::vec4(Tvec, 0.0f);
 
                 // Spawn obstacles between lanes
                 for (int k = 0; k < numObstacles; ++k)
@@ -289,14 +312,17 @@ bool Renderer::init() {
                     case 3: mesh = createTriangularPrism(1.5f, 2.5f, 1.0f);   height = 2.5f; break;
                     }
 
-                    float lift = height * 0.5f + 0.02f;
+
+                    float boardThickness = 0.05f;   // MUST MATCH TRACK BUILDER
+                    float lift = height * 0.5f + boardThickness;
+                    // float lift = height * 0.5f + 0.02f;
 
                     // final world position
                     glm::vec3 obsPos =
                         center +
-                        Nvec * xPos +
-                        Tvec * upShift +     // move forward along track
-                        Bvec * lift;         // lift above board
+                        R * xPos +
+                        T * upShift +     // move forward along track
+                        U * lift;         // lift above board
 
                     glm::mat4 model =
                         glm::translate(glm::mat4(1.0f), obsPos) *
@@ -306,6 +332,8 @@ bool Renderer::init() {
                     obstacle.mesh = mesh;
                     obstacle.model = model;
                     obstacle.doubleSided = true;
+                    obstacle.mesh.textureId = checkersBoardTexture;
+
 
                     staticObjects.push_back(obstacle);
                     createStaticTriangleMeshFromMeshWithTransform(obstacle.mesh, obstacle.model);
@@ -340,9 +368,10 @@ bool Renderer::init() {
         glm::mat4 wallModel = glm::translate(glm::mat4(1.0f), wallPos) * rot;
 
         Renderable wall;
-        wall.mesh = createWall(wallWidth, wallHeight, wallThickness);
+        wall.mesh = createEndWall(wallWidth, wallHeight, wallThickness);
         wall.model = wallModel;
         wall.doubleSided = true;
+        wall.mesh.textureId = checkersBoardTexture;
 
         staticObjects.push_back(wall);
         createStaticTriangleMeshFromMeshWithTransform(wall.mesh, wall.model);
@@ -405,6 +434,8 @@ bool Renderer::init() {
         Renderable sphereObj;
         sphereObj.mesh = sphereMesh;
         sphereObj.model = glm::translate(glm::mat4(1.0f), spawnPos);
+        sphereObj.mesh.textureId = checkersBoardTexture;
+
 
         dynamicObjects.push_back(sphereObj);
         rigidBodyToRenderable.push_back(dynamicObjects.size() - 1);
@@ -476,7 +507,7 @@ bool Renderer::init() {
     Shader& shader = shaderManager.get("sphere");
     shader.use();
     shader.setInt("texture_diffuse", 0);
-    shader.setBool("useTexture",false);
+    shader.setBool("useTexture",true);
 
 
 
@@ -743,20 +774,6 @@ void Renderer::renderFrame() {
     }
 
 
-    // track.draw(sphereShader);
-
-    // glLineWidth(6.0f);
-    // for (auto& r : debugRenderables)
-    //     r.draw(sphereShader);
-
-
-
-    // glLineWidth(1.0f);
-
-    // for(auto& r: tracks_Testing){
-    //     r.draw(sphereShader);
-    // }
-
     glDisable(GL_CULL_FACE);
 
 
@@ -769,26 +786,6 @@ void Renderer::renderFrame() {
     for(auto& r: staticObjects){
         r.draw(sphereShader);
     }
-
-
-    // std::cout << "Calling debugDrawWorld(), lines before = "
-    //           << debugDrawer->lines.size() << std::endl;
-
-    // debugDrawer->clear();
-
-    // dynamicsWorld->debugDrawWorld();
-
-    // Mesh bulletLines = createDebugBulletMesh(debugDrawer->lines);
-    // Renderable bulletRender;
-
-    // bulletRender.mesh = bulletLines;
-    // bulletRender.model = glm::mat4(1.0f);
-
-    // bulletRender.doubleSided = true;
-
-    // bulletRender.draw(sphereShader);
-
-        // std::cout << "lines after = " << debugDrawer->lines.size() << std::endl;
 
 
     glDepthFunc(GL_LEQUAL);

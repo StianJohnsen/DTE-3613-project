@@ -2,6 +2,7 @@
 
 // ENDED UP USING THIS ONE https://freestylized.com/skybox/sky_20/
 
+// FOR SPHERE AND
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

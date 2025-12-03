@@ -40,6 +40,7 @@
 #include "clothoidTransitionPiece.h"
 #include "verticalTransitionPiece.h"
 #include "bulletDebugDrawer.h"
+#include "texture_utils.h"
 
 class Renderer {
 public:
@@ -61,6 +62,8 @@ private:
     bool physicsEnabled = true;
 
     bool followSphere = false;
+
+    GLuint checkersBoardTexture;
 
 
     // Shader* shader = nullptr;
