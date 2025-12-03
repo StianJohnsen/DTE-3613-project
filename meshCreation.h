@@ -1,5 +1,8 @@
 #ifndef MESHCREATION_H
 #define MESHCREATION_H
+
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include "meshPipelineSetup.h"
 #include "hermiteClass.h"
 #include "trackPiece.h"

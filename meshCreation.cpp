@@ -157,80 +157,7 @@ Mesh mergeMeshes(const std::vector<Mesh>& meshes)
 }
 
 
-// Mesh createLoopBoard(const std::vector<glm::vec3>& controlPoints, float width) {
-//     Mesh mesh;
-//     std::vector<float> vertices;
-//     std::vector<unsigned int> indices;
 
-//     if (controlPoints.size() < 2) return mesh;
-
-//     float halfW = width * 0.5f;
-//     glm::vec3 color(1.0f);
-
-//     // Precompute tangent/right/up per control point
-//     std::vector<glm::vec3> tangent(controlPoints.size());
-//     std::vector<glm::vec3> right(controlPoints.size());
-//     std::vector<glm::vec3> up(controlPoints.size());
-
-//     for (size_t i = 0; i < controlPoints.size(); ++i) {
-//         glm::vec3 p0 = (i == 0) ? controlPoints[i] : controlPoints[i-1];
-//         glm::vec3 p1 = controlPoints[i];
-//         glm::vec3 p2 = (i+1 < controlPoints.size()) ? controlPoints[i+1] : controlPoints[i];
-
-//         tangent[i] = glm::normalize(p2 - p1);
-
-//         // Choose stable up vector
-//         glm::vec3 arbitraryUp = glm::vec3(0,1,0);
-//         if (fabs(glm::dot(tangent[i], arbitraryUp)) > 0.99f)
-//             arbitraryUp = glm::vec3(1,0,0);
-
-//         right[i] = glm::normalize(glm::cross(arbitraryUp, tangent[i]));
-//         up[i] = glm::normalize(glm::cross(tangent[i], right[i]));
-//     }
-
-//     auto pushVert = [&](const glm::vec3& pos, const glm::vec3& normal, float u, float v){
-//         vertices.insert(vertices.end(), { pos.x, pos.y, pos.z,
-//                                          normal.x, normal.y, normal.z,
-//                                          u, v, color.r, color.g, color.b });
-//     };
-
-//     // Build vertices
-//     for (size_t i = 0; i < controlPoints.size(); ++i) {
-//         glm::vec3 center = controlPoints[i];
-//         glm::vec3 r = right[i];
-//         glm::vec3 u = up[i];
-
-//         glm::vec3 leftEdge  = center - r * halfW;
-//         glm::vec3 rightEdge = center + r * halfW;
-
-//         float v = float(i) / float(controlPoints.size()-1);
-
-//         pushVert(leftEdge, u, 0.0f, v);
-//         pushVert(rightEdge, u, 1.0f, v);
-//     }
-
-//     // Build simple quad indices
-//     for (size_t i = 0; i < controlPoints.size()-1; ++i) {
-//         unsigned int a = i*2;
-//         unsigned int b = a+2;
-
-//         indices.push_back(a); indices.push_back(b); indices.push_back(a+1);
-//         indices.push_back(a+1); indices.push_back(b); indices.push_back(b+1);
-//     }
-
-//     mesh.vertices = std::move(vertices);
-//     mesh.indices = std::move(indices);
-
-//     GLsizei stride = 11 * sizeof(float);
-//     mesh.attributes = {
-//                        {0,3,GL_FLOAT,GL_FALSE,stride,0},
-//                        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
-//                        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
-//                        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)},
-//                        };
-//     mesh.setup();
-//     return mesh;
-// }
 
 
 Mesh createLoopBoard(const std::vector<glm::vec3>& controlPoints, float width, unsigned int pathResolution) {
@@ -3276,6 +3203,7 @@ Mesh createMorphingHalfpipe(
         // try project world up first (keeps top looking consistent)
         glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
         glm::vec3 up = worldUp - glm::dot(worldUp, forward) * forward;
+
         if (glm::length2(up) < 1e-6f) up = B[i];
         else up = glm::normalize(up);
         glm::vec3 right = glm::normalize(glm::cross(forward, up));
