@@ -23,6 +23,7 @@
             shader.setMat4("model", model);
             shader.setBool("useTexture",useTexture);
 
+            shader.setInt("texture_diffuse", 0);
             if(useTexture && textureID != 0){
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, textureID);

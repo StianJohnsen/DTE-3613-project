@@ -182,7 +182,11 @@ bool Renderer::init() {
     shaderManager.load("skybox", SHADER_PATH("skybox.vert"), SHADER_PATH("skybox.frag"));
 
 
-    checkersBoardTexture = texutils::loadTexture(ASSETS_TEXTURE_PATH("checker_grid.jpg"));
+    trackTextures.push_back(texutils::loadTexture(ASSETS_TEXTURE_PATH("WoodFloor.png")));
+    trackTextures.push_back(texutils::loadTexture(ASSETS_TEXTURE_PATH("Road007.png")));
+    trackTextures.push_back(texutils::loadTexture(ASSETS_TEXTURE_PATH("Fabric004.png")));
+    trackTextures.push_back(texutils::loadTexture(ASSETS_TEXTURE_PATH("Bricks094.png")));
+
 
 
     int   numBoards   = 6;      // how many flatboards you want
@@ -231,12 +235,277 @@ bool Renderer::init() {
         r.mesh  = board.mesh;
         r.model = board.model;
         r.doubleSided = true;
-        r.mesh.textureId = checkersBoardTexture;
+        r.textureID = trackTextures[i % trackTextures.size()];
         r.useTexture = true;
 
         trackPieces.push_back(p);
         staticObjects.push_back(r);
         createStaticTriangleMeshFromMeshWithTransform(r.mesh,r.model);
+
+
+        if(i == 0){
+
+
+
+            // FIRST PAIR (attached to walls)
+            {
+                // int idx = p->smoothedPath.size() * 0.35f;
+                // std::cout << "idx 1: " << idx << "\n";
+
+                // glm::vec3 center = p->smoothedPath[idx];
+
+                // float t = 0.25f;                        // PERFECT fine control
+                // glm::vec3 center = getPointAtT(p->smoothedPath, t);
+
+                // glm::vec3 T, R, U;
+                // getFrameAtT(p->smoothedPath, t, T, R, U);
+                // getFrameAtIndex(p->smoothedPath, idx, T, R, U);
+
+                float t = 0.257f;
+
+                std::cout << "\n\n\n\n\n";
+
+                std::cout << "----- DEFLECTOR DEBUG -----\n";
+                std::cout << "SmoothedPath size = " << p->smoothedPath.size() << "\n";
+
+                std::cout << "Using t = " << t << "\n";
+
+                float fidx = t * (p->smoothedPath.size() - 1);
+                int i0 = int(fidx);
+                int i1 = std::min(i0 + 1, int(p->smoothedPath.size() - 1));
+
+                std::cout << "Computed fidx = " << fidx << "\n";
+                std::cout << "i0 = " << i0 << "  i1 = " << i1 << "\n";
+
+                glm::vec3 P0 = p->smoothedPath[i0];
+                glm::vec3 P1 = p->smoothedPath[i1];
+
+                std::cout << "P0 = (" << P0.x << ", " << P0.y << ", " << P0.z << ")\n";
+                std::cout << "P1 = (" << P1.x << ", " << P1.y << ", " << P1.z << ")\n";
+
+                glm::vec3 center, T, R, U;
+                p->getPointAndFrame(t, center, T, R, U);
+
+                std::cout << "CENTER = (" << center.x << ", " << center.y << ", " << center.z << ")\n";
+                std::cout << "T = (" << T.x << ", " << T.y << ", " << T.z << ")\n";
+                std::cout << "R = (" << R.x << ", " << R.y << ", " << R.z << ")\n";
+                std::cout << "U = (" << U.x << ", " << U.y << ", " << U.z << ")\n";
+                std::cout << "---------------------------\n";
+
+
+                std::cout << "\n\n\n\n\n";
+
+
+
+                // glm::vec3 center, T, R, U;
+                // float t = 0.25f;   // EXACT control, smoothly moves up/down the board
+                // p->getPointAndFrame(t, center, T, R, U);
+
+
+                glm::mat4 basis(1.0f);
+                basis[0] = glm::vec4(R,0);
+                basis[1] = glm::vec4(U,0);
+                basis[2] = glm::vec4(T,0);
+
+                float length     = 4.0f;
+                float innerStart = 0.5f;
+                float innerEnd   = p->trackRadius * 0.5f;
+                float height     = 1.0f;
+
+                Mesh guide = createGuideDeflectorLocal(length, innerStart, innerEnd, height);
+
+                glm::vec3 leftWallInside  = center + R * p->trackRadius;
+                glm::vec3 rightWallInside = center - R * p->trackRadius;
+
+                // LEFT
+                {
+                    glm::mat4 model =
+                        glm::translate(glm::mat4(1), leftWallInside) *
+                        basis;
+
+
+                    // Renderable r;
+                    // r.mesh  = board.mesh;
+                    // r.model = board.model;
+                    // r.doubleSided = true;
+                    // r.mesh.textureId = checkersBoardTexture;
+                    // r.useTexture = true;
+
+                    Renderable r;
+                    r.mesh = guide;
+                    r.model = model;
+                    r.doubleSided = true;
+                    staticObjects.push_back(r);
+                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+                }
+
+                // RIGHT
+                {
+                    glm::mat4 mirror = glm::scale(glm::mat4(1), glm::vec3(-1,1,1));
+
+                    glm::mat4 model =
+                        glm::translate(glm::mat4(1), rightWallInside) *
+                        basis *
+                        mirror;
+
+                    Renderable r;
+                    r.mesh = guide;
+                    r.model = model;
+                    r.doubleSided = true;
+                    staticObjects.push_back(r);
+                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+                }
+            }
+
+
+
+
+            // SECOND PAIR (centered, not attached to walls)
+            {
+                // int idx = p->smoothedPath.size() * 0.95f;
+                // std::cout << "idx 2: " << idx << "\n";
+
+                // std::cout << "smoothedPath.size(): " << p->smoothedPath.size() << "\n";
+
+                // glm::vec3 center = p->smoothedPath[idx];
+
+                // glm::vec3 T, R, U;
+                // getFrameAtIndex(p->smoothedPath, idx, T, R, U);
+                // float t = 0.95f;                        // PERFECT fine control
+                // glm::vec3 center = getPointAtT(p->smoothedPath, t);
+
+                // glm::vec3 T, R, U;
+                // getFrameAtT(p->smoothedPath, t, T, R, U);
+
+                glm::vec3 center, T, R, U;
+                float t = 0.955f;   // EXACT control, smoothly moves up/down the board
+                p->getPointAndFrame(t, center, T, R, U);
+
+
+
+                glm::mat4 basis(1.0f);
+                basis[0] = glm::vec4(R,0);
+                basis[1] = glm::vec4(U,0);
+                basis[2] = glm::vec4(T,0);
+
+                float length     = 4.0f;
+                float innerStart = 0.5f;
+                float innerEnd   = p->trackRadius * 0.5f;
+                float height     = 1.0f;
+
+                Mesh guide = createGuideDeflectorLocal(length, innerStart, innerEnd, height);
+
+                // Here you said: “use the center instead”
+                glm::vec3 posLeft  = center;     // NO wall offset
+                glm::vec3 posRight = center;
+
+                // LEFT (inner direction = -R)
+                {
+                    glm::mat4 model =
+                        glm::translate(glm::mat4(1), posLeft) *
+                        basis;
+
+                    Renderable r;
+                    r.mesh = guide;
+                    r.model = model;
+                    r.doubleSided = true;
+                    staticObjects.push_back(r);
+                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+                }
+
+                // RIGHT (mirror X axis)
+                {
+                    glm::mat4 mirror = glm::scale(glm::mat4(1), glm::vec3(-1,1,1));
+
+                    glm::mat4 model =
+                        glm::translate(glm::mat4(1), posRight) *
+                        basis *
+                        mirror;
+
+                    Renderable r;
+                    r.mesh = guide;
+                    r.model = model;
+                    r.doubleSided = true;
+                    staticObjects.push_back(r);
+                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+
+                    // auto last = p->smoothedPath.back();
+                    // std::cout << "PATH END = (" << last.x << ", " << last.y << ", " << last.z << ")\n";
+
+                }
+            }
+
+
+            // int idx = p->smoothedPath.size() * 0.7f;
+
+            // glm::vec3 center = p->smoothedPath[idx];
+
+            // glm::vec3 T, R, U;
+            // getFrameAtIndex(p->smoothedPath, idx, T, R, U);
+
+            // glm::mat4 basis(1.0f);
+            // basis[0] = glm::vec4(R,0);
+            // basis[1] = glm::vec4(U,0);
+            // basis[2] = glm::vec4(T,0);
+
+
+
+
+
+            // float length     = 4.0f;
+            // float innerStart = 0.5f;                  // small
+            // float innerEnd   = p->trackRadius * 0.5f; // wide
+            // float height     = 1.0f;
+
+            // Mesh guide = createGuideDeflectorLocal(
+            //     length,
+            //     innerStart,
+            //     innerEnd,
+            //     height
+            //     );
+
+            // glm::vec3 leftWallInside  = center + R * p->trackRadius;
+            // glm::vec3 rightWallInside = center - R * p->trackRadius;
+
+            // // LEFT
+            // {
+            //     glm::mat4 model =
+            //         glm::translate(glm::mat4(1), leftWallInside) *
+            //         basis;
+
+            //     Renderable g;
+            //     g.mesh = guide;
+            //     g.model = model;
+            //     g.doubleSided = true;
+            //     staticObjects.push_back(g);
+            //     createStaticTriangleMeshFromMeshWithTransform(g.mesh, g.model);
+            // }
+
+
+            // // RIGHT (mirrored across X)
+            // {
+            //     glm::mat4 mirror = glm::scale(glm::mat4(1), glm::vec3(-1,1,1));
+
+            //     glm::mat4 model =
+            //         glm::translate(glm::mat4(1), rightWallInside) *
+            //         basis *
+            //         mirror;
+
+            //     Renderable g;
+            //     g.mesh = guide;
+            //     g.model = model;
+            //     g.doubleSided = true;
+            //     staticObjects.push_back(g);
+            //     createStaticTriangleMeshFromMeshWithTransform(g.mesh, g.model);
+            // }
+        }
+
+
+
+
+
 
         // ==================================================
         //  STAGGERED OBSTACLES FOR THIS BOARD
@@ -279,15 +548,15 @@ bool Renderer::init() {
 
                 int idx = int(float(row + 1) / float(rowsPerBoard + 1) * M);
 
-                // BEFORE clamping — debug
-                std::cout << "[IDX] raw=" << idx
-                          << "  M=" << M
-                          << "  row=" << row << "\n";
+                // // BEFORE clamping — debug
+                // std::cout << "[IDX] raw=" << idx
+                //           << "  M=" << M
+                //           << "  row=" << row << "\n";
 
                 idx = std::clamp(idx, 0, M - 1);
 
                 // AFTER clamping
-                std::cout << "      clamped=" << idx << "\n";
+                // std::cout << "      clamped=" << idx << "\n";
 
 
                 glm::vec3 center = p->smoothedPath[idx];
@@ -305,6 +574,49 @@ bool Renderer::init() {
                 basis[0] = glm::vec4(R, 0);
                 basis[1] = glm::vec4(U, 0);
                 basis[2] = glm::vec4(T, 0);
+
+                float halfW = p->trackRadius;
+                float deflectorHeight = 1.2f;     // you tune this
+                float deflectorInward = 0.6f;     // you tune this
+                float boardYoffset   = 0.05f;     // board thickness
+
+                glm::vec3 leftBase  = center - R * halfW + U * boardYoffset;
+                glm::vec3 rightBase = center + R * halfW + U * boardYoffset;
+
+                // Mesh defMesh = createDeflectorRail(deflectorHeight, deflectorInward);
+
+                // {
+
+                //     glm::mat4 model = glm::translate(glm::mat4(1.f), leftBase) * basis;
+                //     Renderable d;
+                //     d.mesh  = defMesh;
+                //     d.model = model;
+                //     d.doubleSided = true;
+
+                //     staticObjects.push_back(d);
+                //     createStaticTriangleMeshFromMeshWithTransform(d.mesh, d.model);
+
+                // }
+
+
+                // // RIGHT SIDE → MIRROR: inward direction is NEGATIVE R
+                // {
+                //     // We flip X-scale to mirror the piece
+                //     glm::mat4 mirror = glm::scale(glm::mat4(1.f), glm::vec3(-1,1,1));
+
+                //     glm::mat4 model =
+                //         glm::translate(glm::mat4(1.f), rightBase) *
+                //         basis *
+                //         mirror;
+
+                //     Renderable d;
+                //     d.mesh  = defMesh;
+                //     d.model = model;
+                //     d.doubleSided = true;
+
+                //     staticObjects.push_back(d);
+                //     createStaticTriangleMeshFromMeshWithTransform(d.mesh, d.model);
+                // }
 
                 //--------------------------------------------------
                 // Spawn obstacles between lanes
@@ -359,8 +671,9 @@ bool Renderer::init() {
                     obstacle.mesh = mesh;
                     obstacle.model = model;
                     obstacle.doubleSided = true;
-                    obstacle.mesh.textureId = checkersBoardTexture;
+                    obstacle.textureID = trackTextures[0];
 
+                    obstacle.useTexture = true;
                     staticObjects.push_back(obstacle);
                     createStaticTriangleMeshFromMeshWithTransform(obstacle.mesh, obstacle.model);
                 }
@@ -402,7 +715,7 @@ bool Renderer::init() {
         wall.mesh = createEndWall(wallWidth, wallHeight, wallThickness);
         wall.model = wallModel;
         wall.doubleSided = true;
-        wall.mesh.textureId = checkersBoardTexture;
+        wall.textureID = trackTextures[0];
 
         staticObjects.push_back(wall);
         createStaticTriangleMeshFromMeshWithTransform(wall.mesh, wall.model);
@@ -422,7 +735,7 @@ bool Renderer::init() {
     //  CREATE SPHERES (after track is fully built)
     // =====================================================
 
-    std::cout << "[SPHERES] Creating spheres...\n";
+    // std::cout << "[SPHERES] Creating spheres...\n";
 
     const int nSpheres = nLanes;     // 1 sphere per lane
     const float radius = sphereRadius;
@@ -463,7 +776,7 @@ bool Renderer::init() {
         sphereObj.mesh = sphereMesh;
         sphereObj.model = model;
         sphereObj.doubleSided = true;
-        sphereObj.mesh.textureId = checkersBoardTexture;
+        sphereObj.textureID = trackTextures[0];
         sphereObj.useTexture = true;
 
         dynamicObjects.push_back(sphereObj);
@@ -478,81 +791,6 @@ bool Renderer::init() {
     }
 
     std::cout << "[SPHERES] Done. Count = " << physicsBodies.size() << "\n";
-
-
-
-
-
-    // TrackPiece* track = trackPieces[0];
-    // float t = 0.15f; // 25% down the track
-    // size_t i = size_t(t * (track->smoothedPath.size() - 1));
-
-    // glm::vec3 center = track->smoothedPath[i];
-    // glm::vec3 right  = track->frameR[i];
-    // glm::vec3 up     = track->frameT[i];
-
-    // float halfW = track->trackRadius;    // = width/2  (10.0f)
-    // float leftMargin  = 1.0f;
-    // float rightMargin = 1.0f;
-
-    // float sphereRadius = 1.0f;
-
-    // edge positions in world space
-
-
-    // distance available for sphere centers
-    // float usable = (2*halfW) - leftMargin - rightMargin - 2*sphereRadius;
-
-    // // uniform interpolation parameter
-    // float spacing = (nLanes > 1) ? usable / (nLanes-1) : 0.0f;
-
-    // Mesh sphereMesh = createSphere(sphereRadius, 36, 18);
-
-
-    // for (int k = 0; k < nLanes; ++k) {
-
-
-    //     // t goes 0 → 1 over row
-    //     float t = (nLanes == 1) ? 0.5f : float(k) / float(nLanes - 1);
-
-    //     // sphere center along board
-    //     float xLocal = -halfW + leftMargin + sphereRadius + t * usable;
-
-
-
-    //     Renderable sphereObj;
-    //     sphereObj.mesh = sphereMesh;
-
-    //     sphereObj.mesh.textureId = checkersBoardTexture;
-
-
-    //     dynamicObjects.push_back(sphereObj);
-    //     rigidBodyToRenderable.push_back(dynamicObjects.size() - 1);
-    //     physicsBodies.push_back(createSphereRigidBody(sphereRadius, sphereObj.model, 1.0f));
-
-
-    //     if (k == playerSphereIndex) {
-    //         std::cout << "[PLAYER] sphere is at index " << k << "\n";
-    //     }
-    // }
-
-
-
-    // glm::vec3 loopPos = glm::vec3(0, 20, 20);
-    // glm::vec3 loopDir = glm::vec3(0, 0, 1);  // forward
-
-    // LoopPiece* loopPiece = new LoopPiece(12.0f, 96);
-    // loopPiece->generateControlPoints(loopPos, loopDir);
-
-    // // Add like any other track piece
-
-    // Renderable loopRenderable;
-    // loopRenderable.mesh = loopPiece->mesh;
-    // loopRenderable.model = glm::translate(glm::mat4(1.0f),loopPos);
-    // staticObjects.push_back(loopRenderable);
-    // createStaticTriangleMeshFromMesh(loopPiece->mesh);
-
-
 
     Light light1;
     light1.position = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.7f)); // direction
@@ -598,14 +836,11 @@ bool Renderer::init() {
     shader.setInt("texture_diffuse", 0);
     shader.setBool("useTexture",true);
 
-
-
     // === FOLLOW CAMERA ===
-
 
     if (!physicsBodies.empty()) {
 
-        std::cout << "Not empty\n";
+        // std::cout << "Not empty\n";
         int sphereIdx = playerSphereIndex;
 
         btTransform trans;
@@ -628,29 +863,9 @@ bool Renderer::init() {
         firstMouse = true;
     }
     else {
-        std::cout << "[WARNING] No spheres exist — skipping follow-camera init.\n";
+        // std::cout << "[WARNING] No spheres exist — skipping follow-camera init.\n";
         followSphere = false;
     }
-
-    // Get sphere transform
-    // btTransform trans;
-    // physicsBodies[sphereIdx]->getMotionState()->getWorldTransform(trans);
-    // glm::mat4 sphereModel = btTransformToGlm(trans);
-
-    // glm::vec3 spherePos = glm::vec3(sphereModel[3]);  // sphere world position
-
-    // // Camera offset relative to sphere
-    // glm::vec3 camOffset(-6.0f, 3.0f, -10.0f); // tune this
-
-    // // Set camera position
-    // camera.Position = spherePos + camOffset;
-
-    // // Compute new camera forward direction
-    // camera.Front = glm::normalize(spherePos - camera.Position);
-
-    // // Rebuild Right and Up manually
-    // camera.Right = glm::normalize(glm::cross(camera.Front, camera.WorldUp));
-    // camera.Up    = glm::normalize(glm::cross(camera.Right, camera.Front));
 
 
     // debugDrawer = new BulletDebugDrawer();
@@ -755,78 +970,6 @@ void Renderer::processInput() {
         inputManager.resetScroll();
     }
 }
-
-
-// void Renderer::processInput() {
-
-
-//     static bool fWasPressed = false;
-//     static bool pWasPressed = false;
-
-//     bool fPressed = inputManager.isKeyPressed(GLFW_KEY_F);
-//     bool pPressed = inputManager.isKeyPressed(GLFW_KEY_P);
-
-
-//     if(pPressed && !pWasPressed){
-//         physicsEnabled = !physicsEnabled;
-//         // std::cout << "[PHOTO MODE] Physics "
-//         //           << (physicsEnabled ? "ENABLED\n" : "DISABLED — objects frozen\n");
-//     }
-//     pWasPressed = pPressed;
-
-//     if (fPressed && !fWasPressed) {
-//         followSphere = !followSphere;
-
-//         if (!followSphere) {
-//             // ===== Leaving follow mode → sync yaw/pitch to current camera =====
-//             camera.Yaw   = glm::degrees(atan2(camera.Front.z, camera.Front.x));
-//             camera.Pitch = glm::degrees(asin(camera.Front.y));
-
-//             // prevent jump on first mouse move
-//             firstMouse = true;
-//         }
-
-//         if (followSphere) {
-//             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);      // release mouse
-//         } else {
-//             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);    // recapture mouse
-//         }
-//     }
-
-//     fWasPressed = fPressed;
-
-
-//     if(!followSphere){
-//         if (inputManager.isKeyPressed(GLFW_KEY_W))
-//             camera.ProcessKeyboard(FORWARD, deltaTime);
-//         if (inputManager.isKeyPressed(GLFW_KEY_S))
-//             camera.ProcessKeyboard(BACKWARD, deltaTime);
-//         if (inputManager.isKeyPressed(GLFW_KEY_A))
-//             camera.ProcessKeyboard(LEFT, deltaTime);
-//         if (inputManager.isKeyPressed(GLFW_KEY_D))
-//             camera.ProcessKeyboard(RIGHT, deltaTime);
-//         if (inputManager.isKeyPressed(GLFW_KEY_SPACE))
-//             camera.ProcessKeyboard(UP, deltaTime);
-//         if (inputManager.isKeyPressed(GLFW_KEY_LEFT_SHIFT))
-//             camera.ProcessKeyboard(DOWN, deltaTime);
-//     }
-
-
-
-
-
-
-//     if (inputManager.isKeyPressed(GLFW_KEY_ESCAPE) && mouseCaptured) {
-//         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-//         mouseCaptured = false;
-//     }
-
-//     // Handle scroll input (zoom)
-//     if (inputManager.getScrollY() != 0.0) {
-//         camera.ProcessMouseScroll(inputManager.getScrollY());
-//         inputManager.resetScroll();
-//     }
-// }
 
 void Renderer::renderFrame() {
     glClearColor(0.2f, 0.0f, 0.3f, 1.0f);
@@ -1323,4 +1466,35 @@ void Renderer::getFrameAtIndex(
 
     R = glm::normalize(glm::cross(worldUp, T));
     U = glm::normalize(glm::cross(T, R));
+}
+
+glm::vec3 Renderer::getPointAtT(const std::vector<glm::vec3>& pts, float t)
+{
+    if (pts.size() < 2) return pts.front();
+
+    float total = pts.size() - 1;
+
+    float f = t * total;
+    int i = floor(f);
+    float frac = f - i;
+
+    if (i >= pts.size() - 1)
+        return pts.back();
+
+    return glm::mix(pts[i], pts[i+1], frac);
+}
+
+
+
+void Renderer::getFrameAtT(const std::vector<glm::vec3>& pts, float t,
+                 glm::vec3& T, glm::vec3& R, glm::vec3& U)
+{
+    glm::vec3 p = getPointAtT(pts, t);
+
+    float eps = 1.0f / float(pts.size());
+    glm::vec3 pNext = getPointAtT(pts, std::min(t+eps, 1.0f));
+
+    T = glm::normalize(pNext - p);
+    R = glm::normalize(glm::cross(T, glm::vec3(0,1,0))); // world up fallback
+    U = glm::normalize(glm::cross(R, T));
 }

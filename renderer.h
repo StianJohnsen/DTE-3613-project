@@ -30,15 +30,8 @@
 #include "renderable.h"
 #include "shaderManager.h"
 #include "skybox.h"
-#include "hermiteClass.h"
 #include "trackPiece.h"
 #include "flatBoardPiece.h"
-#include "loopPiece.h"
-#include "spiralPiece.h"
-#include "loopEntrancePiece.h"
-#include "transitionPiece.h"
-#include "clothoidTransitionPiece.h"
-#include "verticalTransitionPiece.h"
 #include "bulletDebugDrawer.h"
 #include "texture_utils.h"
 
@@ -63,8 +56,11 @@ private:
 
     bool followSphere = false;
 
-    GLuint checkersBoardTexture;
+    // GLuint checkersBoardTexture;
 
+    std::vector<GLuint> sphereTextures;
+    std::vector<GLuint> trackTextures;
+    std::vector<GLuint> obstacleTextures;
 
     // Shader* shader = nullptr;
     ShaderManager shaderManager;
@@ -96,7 +92,6 @@ private:
     bool raceFinished = false;
     std::vector<Light> lights;
 
-    HermiteTrack hermiteTrack;
 
     // Physics: Bullet members
     btBroadphaseInterface* broadphase = nullptr;
@@ -104,7 +99,6 @@ private:
     btCollisionDispatcher* dispatcher = nullptr;
     btSequentialImpulseConstraintSolver* solver = nullptr;
     btDiscreteDynamicsWorld* dynamicsWorld = nullptr;
-    BulletDebugDrawer* debugDrawer = nullptr;
 
     // keep track of allocated collision shapes & bodies to cleanup
     std::vector<btCollisionShape*> collisionShapes;
@@ -169,6 +163,10 @@ private:
                       const glm::vec3& up,
                       const glm::vec3& tangent);
 
+    glm::vec3 getPointAtT(const std::vector<glm::vec3>& pts, float t);
+
+    void getFrameAtT(const std::vector<glm::vec3>& pts, float t,
+                     glm::vec3& T, glm::vec3& R, glm::vec3& U);
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void mouse_callback(GLFWwindow* window, double xpos, double ypos);

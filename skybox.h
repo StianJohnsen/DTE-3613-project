@@ -6,8 +6,6 @@
 #include <vector>
 #include <GL/glew.h>
 #include <stb_image.h>
-#include "processVertices.h"
-
 #include "meshPipelineSetup.h"
 #include "shader.h"
 #include "texture_utils.h"
@@ -52,6 +50,5 @@ public:
         glDepthFunc(GL_LESS);
     }
 };
-
 
 #endif // SKYBOX_H

@@ -17,7 +17,6 @@ struct VertexAttribute
 
 struct Mesh{
     GLuint VAO, VBO, EBO;
-    GLuint textureId = 0;
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
     std::vector<VertexAttribute> attributes;
@@ -53,15 +52,6 @@ struct Mesh{
     }
 
     void draw(GLuint shaderProgram) const {
-        if (textureId != 0) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureId);
-            glUniform1i(glGetUniformLocation(shaderProgram, "texture_diffuse"), 0);
-            glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), GL_TRUE);
-        } else {
-            glUniform1i(glGetUniformLocation(shaderProgram, "useTexture"), GL_FALSE);
-        }
-
         glBindVertexArray(VAO);
         if(!indices.empty()){
             glDrawElements(primitiveType, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);

@@ -18,7 +18,6 @@
 
 #include <SOIL2/SOIL2.h>
 
-// std::string readShaderFile(const std::filesystem::path& filepath);
 
 GLuint loadShader(const std::filesystem::path& path, GLenum shaderType);
 

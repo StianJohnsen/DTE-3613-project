@@ -2,7 +2,7 @@
 
 // ENDED UP USING THIS ONE https://freestylized.com/skybox/sky_20/
 
-// FOR SPHERE AND
+// FOR SPHERE AND TRACK I USE AMBIENTCG
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -16,7 +16,7 @@
 #include "meshCreation.h"
 #include "meshPipelineSetup.h"
 #include "processShader.h"
-#include "processVertices.h"
+// #include "processVertices.h"
 #include "shader.h"
 #include "camera.h"
 // #include "particleSystem.h"
