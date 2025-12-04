@@ -17,10 +17,7 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/btBulletCollisionCommon.h>
 
-
 #include <vector>
-
-
 #include "shader.h"
 #include "meshCreation.h"
 #include "camera.h"
@@ -32,7 +29,6 @@
 #include "skybox.h"
 #include "trackPiece.h"
 #include "flatBoardPiece.h"
-#include "bulletDebugDrawer.h"
 #include "texture_utils.h"
 
 class Renderer {

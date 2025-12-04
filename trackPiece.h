@@ -124,7 +124,7 @@ protected:
     void computeSpline() {
         smoothedPath.clear();
 
-        const int n = controlPoints.size();
+        const size_t n = controlPoints.size();
         if (n < 4) {
             smoothedPath = controlPoints;    // linear fallback
             return;
@@ -146,10 +146,6 @@ protected:
 
         smoothedPath.push_back(controlPoints.back());
     }
-
-
-
-
 };
 
 #endif // TRACKPIECE_H
