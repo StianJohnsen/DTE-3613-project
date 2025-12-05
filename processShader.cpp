@@ -16,7 +16,6 @@ GLuint loadShader(const std::filesystem::path& path, GLenum shaderType){
     glShaderSource(shader, 1, &codeCStr, nullptr);
     glCompileShader(shader);
 
-    // Error checking
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {

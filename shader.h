@@ -10,13 +10,10 @@
 
 #include "processShader.h"
 
-// forward declaration / dependency: your function that builds+links program
-// keep processShader.h in your project and include it in files that use Shader
-// extern GLuint createShaderProgram(const std::string& vertPath, const std::string& fragPath);
+
 
 class Shader {
 public:
-    // construct from shader file paths
     Shader(const std::string& vertPath, const std::string& fragPath) {
         id = createShaderProgram(vertPath, fragPath);
         if(id == 0) {
@@ -24,22 +21,18 @@ public:
         }
     }
 
-    // RAII cleanup
     ~Shader() {
         if (id != 0) glDeleteProgram(id);
     }
 
-    // non-copyable (program id owned)
     Shader(const Shader&) = delete;
     Shader& operator=(const Shader&) = delete;
 
-    // but movable
     Shader(Shader&& o) noexcept : id(o.id), uniformCache(std::move(o.uniformCache)) { o.id = 0; }
     Shader& operator=(Shader&& o) noexcept { if(this!=&o){ if(id) glDeleteProgram(id); id=o.id; id=0; uniformCache=std::move(o.uniformCache);} return *this; }
 
     void use() const { glUseProgram(id); }
 
-    // set helpers
     void setBool(const std::string& name, bool value) const {
         auto loc = getLocation(name); if(loc>=0) glUniform1i(loc, (int)value);
     }
@@ -68,7 +61,6 @@ private:
         GLint loc = glGetUniformLocation(id, name.c_str());
         uniformCache[name] = loc;
         if (loc == -1) {
-            // optional: a single warning per missing uniform (or log)
             static thread_local std::unordered_map<std::string, bool> warned;
             if (!warned[name]) {
                 std::cerr << "[Shader] Warning: uniform '" << name << "' not found or is inactive.\n";

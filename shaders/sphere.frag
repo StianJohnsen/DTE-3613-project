@@ -34,17 +34,13 @@ uniform bool useTexture;
 void main(void)
 {
 
-    // normalize
     vec3 norm = normalize(normal);
-    // vec3 lightDir = normalize(light.position - fragPos);
 
     vec3 result = vec3(0.0);
 
-    // vec3 result = vec3(0.4) * material.diffuse; // base ambient floor
 
     for(int i = 0; i < numLights; ++i){
 
-        // vec3 lightDir = normalize(lights[i].position - fragPos);
         vec3 lightDir = normalize(-lights[i].position);
 
         // ambient
@@ -59,7 +55,6 @@ void main(void)
         vec3 reflectDir = reflect(-lightDir, norm);
 
         float spec = pow(max(dot(viewDir,reflectDir),0.0),material.shininess);
-        // vec3 specular = vec3(0.0);
         vec3 specular = lights[i].specular * (spec * material.specular);
 
         result += ambient + diffuse + specular;

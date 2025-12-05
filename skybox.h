@@ -35,7 +35,6 @@ public:
         glDepthFunc(GL_LEQUAL);
         shader.use();
 
-        // remove translation from the view matrix
         glm::mat4 viewNoTrans = glm::mat4(glm::mat3(view));
         shader.setMat4("view", viewNoTrans);
         shader.setMat4("projection", projection);

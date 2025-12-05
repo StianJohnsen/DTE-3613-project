@@ -16,10 +16,9 @@
 #include "meshCreation.h"
 #include "meshPipelineSetup.h"
 #include "processShader.h"
-// #include "processVertices.h"
 #include "shader.h"
 #include "camera.h"
-// #include "particleSystem.h"
+
 
 #include "renderer.h"
 
@@ -74,7 +73,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    // Don't process mouse movement when not captured
     if (!mouseCaptured)
         return;
 
@@ -86,7 +84,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float yoffset = lastY - ypos;
 
     lastX = xpos;
     lastY = ypos;
@@ -106,7 +104,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !mouseCaptured)
     {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        firstMouse = true;  // reset before re-enabling movement
+        firstMouse = true;
         mouseCaptured = true;
     }
 }

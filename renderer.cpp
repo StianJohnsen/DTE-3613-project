@@ -187,7 +187,8 @@ bool Renderer::init() {
         r.mesh  = board.mesh;
         r.model = board.model;
         r.doubleSided = true;
-        r.textureID = trackTextures[i % trackTextures.size()];
+        GLuint boardTexture = trackTextures[i % trackTextures.size()];
+        r.textureID = boardTexture;
         r.useTexture = true;
 
         trackPieces.push_back(p);
@@ -287,8 +288,16 @@ bool Renderer::init() {
                     r.doubleSided = true;
                     r.textureID = texutils::loadTexture(ASSETS_TEXTURE_PATH("Fabric004.png"));
                     r.useTexture = true;
-                    staticObjects.push_back(r);
-                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+
+
+                    // UNCOMMENT TO SEE AN ADDITIONAL OBSTACLE
+
+                    // staticObjects.push_back(r);
+                    // createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+
+
                 }
 
                 {
@@ -305,8 +314,19 @@ bool Renderer::init() {
                     r.doubleSided = true;
                     r.textureID = texutils::loadTexture(ASSETS_TEXTURE_PATH("Fabric004.png"));
                     r.useTexture = true;
-                    staticObjects.push_back(r);
-                    createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+
+
+                    // UNCOMMENT TO SEE AN ADDITIONAL OBSTACLE
+
+
+
+                    // staticObjects.push_back(r);
+                    // createStaticTriangleMeshFromMeshWithTransform(r.mesh, r.model);
+
+
+
+
 
                 }
             }
@@ -428,7 +448,7 @@ bool Renderer::init() {
         wall.model = wallModel;
         wall.doubleSided = true;
 
-        wall.textureID = trackTextures[i % trackTextures.size()];
+        wall.textureID = boardTexture;
         wall.useTexture = true;
         staticObjects.push_back(wall);
         createStaticTriangleMeshFromMeshWithTransform(wall.mesh, wall.model);
@@ -534,6 +554,8 @@ bool Renderer::init() {
 
     if (!physicsBodies.empty()) {
 
+
+        // WHICH MARBLE DO YOU CHOOSE?
         int sphereIdx = playerSphereIndex;
 
         btTransform trans;

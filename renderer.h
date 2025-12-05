@@ -52,33 +52,19 @@ private:
 
     bool followSphere = false;
 
-    // GLuint checkersBoardTexture;
-
     std::vector<GLuint> sphereTextures;
     std::vector<GLuint> trackTextures;
     std::vector<GLuint> obstacleTextures;
 
-    // Shader* shader = nullptr;
     ShaderManager shaderManager;
     Skybox skybox;
     Mesh sphere;
-    Renderable track;
-    // Renderable debugIDontKnow;
     Camera camera;
 
     std::vector<TrackPiece*> trackPieces;
-    Renderable combinedTrack;
 
-    std::vector<Renderable> debugRenderables;
-
-    std::vector<Renderable> tracks_Testing;
-
-
-    // Light light;
-    Material material;
     std::vector<Renderable> staticObjects;
     std::vector<Renderable> dynamicObjects;
-
 
     int winnerIndex = -1;
 
@@ -89,23 +75,17 @@ private:
     std::vector<Light> lights;
 
 
-    // Physics: Bullet members
     btBroadphaseInterface* broadphase = nullptr;
     btDefaultCollisionConfiguration* collisionConfiguration = nullptr;
     btCollisionDispatcher* dispatcher = nullptr;
     btSequentialImpulseConstraintSolver* solver = nullptr;
     btDiscreteDynamicsWorld* dynamicsWorld = nullptr;
 
-    // keep track of allocated collision shapes & bodies to cleanup
     std::vector<btCollisionShape*> collisionShapes;
-    std::vector<btRigidBody*> physicsBodies; // corresponds to dynamicObjects indices
+    std::vector<btRigidBody*> physicsBodies;
     std::vector<unsigned int> rigidBodyToRenderable;
 
-    glm::vec3 extractPosition(const glm::mat4& m);
 
-
-
-    // helper functions
     btRigidBody* createStaticTriangleMeshFromMesh(const Mesh& mesh);
     btRigidBody* createSphereRigidBody(float radius, const glm::mat4& startTransform, float mass = 1.0f);
     btRigidBody* createStaticTriangleMeshFromMeshWithTransform(
@@ -114,25 +94,12 @@ private:
     glm::mat4 btTransformToGlm(const btTransform& t) const;
     btTransform glmToBtTransform(const glm::mat4& m) const;
 
-    void addObstacle(
-        const Mesh& mesh,
-        const glm::vec3& position,
-        const glm::mat4& basis,
-        const glm::vec3& scale);
-
-    glm::mat4 buildBasis(const glm::vec3& N,
-                                   const glm::vec3& B,
-                                   const glm::vec3& T);
-
-
     void getFrameAtIndex(
         const std::vector<glm::vec3> &path,
         int i,
         glm::vec3 &T,
         glm::vec3 &R,
         glm::vec3 &U);
-
-
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
@@ -147,22 +114,6 @@ private:
     void processInput();
     void updateDeltaTime();
     void renderFrame();
-
-    float extractRoll(const glm::vec3& N, const glm::vec3& U, const glm::vec3& worldUp);
-    float computeRollBetween(const glm::vec3& R0,
-                                       const glm::vec3& U0,
-                                       const glm::vec3& T,
-                             const glm::vec3& R1);
-
-
-    float computeRoll(const glm::vec3& right,
-                      const glm::vec3& up,
-                      const glm::vec3& tangent);
-
-    glm::vec3 getPointAtT(const std::vector<glm::vec3>& pts, float t);
-
-    void getFrameAtT(const std::vector<glm::vec3>& pts, float t,
-                     glm::vec3& T, glm::vec3& R, glm::vec3& U);
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void mouse_callback(GLFWwindow* window, double xpos, double ypos);

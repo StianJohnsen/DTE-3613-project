@@ -40,7 +40,6 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
     Yaw   += xoffset;
     Pitch += yoffset;
 
-    // Clamp pitch
     if (constrainPitch) {
         if (Pitch > 89.0f)
             Pitch = 89.0f;
@@ -66,7 +65,6 @@ void Camera::updateCameraVectors() {
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front = glm::normalize(front);
 
-    // Recalculate Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));
     Up    = glm::normalize(glm::cross(Right, Front));
 }

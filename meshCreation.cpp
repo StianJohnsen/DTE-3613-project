@@ -1,8 +1,5 @@
 #include "meshCreation.h"
-// #include "processVertices.h"
 #include "renderer.h"
-
-
 
 Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCount)
 {
@@ -11,8 +8,6 @@ Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCoun
     std::vector<float> verts;
     std::vector<unsigned int> inds;
 
-    // -----------------------------
-    // INLINE createUVSphere()
     verts.clear();
     inds.clear();
 
@@ -36,12 +31,10 @@ Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCoun
             x = xy * cosf(sectorAngle);
             y = xy * sinf(sectorAngle);
 
-            // position
             verts.push_back(x);
             verts.push_back(y);
             verts.push_back(z);
 
-            // normal
             nx = x / radius;
             ny = y / radius;
             nz = z / radius;
@@ -49,13 +42,11 @@ Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCoun
             verts.push_back(ny);
             verts.push_back(nz);
 
-            // UV
             s = (float)j / (float)sectorCount;
             t = (float)i / (float)stackCount;
             verts.push_back(s);
             verts.push_back(t);
 
-            // COLOR (blue default)
             verts.push_back(0.0f);
             verts.push_back(0.0f);
             verts.push_back(1.0f);
@@ -84,7 +75,6 @@ Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCoun
             }
         }
     }
-    // -----------------------------
 
 
     mesh.vertices = std::move(verts);
@@ -105,9 +95,7 @@ Mesh createSphere(float radius, unsigned int sectorCount, unsigned int stackCoun
 
 Mesh createSkybox(){
     Mesh mesh;
-    std::vector<float> verts;
-    verts = {
-        // positions
+    std::vector<float> verts = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f,
@@ -150,14 +138,12 @@ Mesh createSkybox(){
         -1.0f, -1.0f,  1.0f,
         1.0f, -1.0f,  1.0f
     };
-    // createUVSkybox(verts);
 
     mesh.vertices = std::move(verts);
-    mesh.indices = {};  // Skybox drawn without index buffer
-
-    GLsizei stride = 3 * sizeof(float);  // only positions
+    mesh.indices = {};
+    GLsizei stride = 3 * sizeof(float);
     mesh.attributes = {
-        {0, 3, GL_FLOAT, GL_FALSE, stride, 0}  // POSITION only
+        {0, 3, GL_FLOAT, GL_FALSE, stride, 0}
     };
 
     mesh.setup();
@@ -175,7 +161,6 @@ Mesh createWall(float width, float height, float thickness)
     const float hh = height * 0.5f;
     const float ht = thickness * 0.5f;
 
-    // UV scale ratios
     float uFront  = width      / height;
     float uSide   = thickness  / height;
     float uTopBot = width      / thickness;
@@ -189,54 +174,46 @@ Mesh createWall(float width, float height, float thickness)
     };
 
     glm::vec3 p[8] = {
-        {-hw, -hh, -ht}, // 0 bottom
-        { hw, -hh, -ht}, // 1
-        { hw,  hh, -ht}, // 2 top
-        {-hw,  hh, -ht}, // 3
-
-        {-hw, -hh,  ht}, // 4
-        { hw, -hh,  ht}, // 5
-        { hw,  hh,  ht}, // 6
-        {-hw,  hh,  ht}  // 7
+        {-hw, -hh, -ht},
+        { hw, -hh, -ht},
+        { hw,  hh, -ht},
+        {-hw,  hh, -ht},
+        {-hw, -hh,  ht},
+        { hw, -hh,  ht},
+        { hw,  hh,  ht},
+        {-hw,  hh,  ht}
     };
 
-    // FRONT (+Z)
     pushVert(p[4], {0,0,1}, 0.0f, 0.0f);
     pushVert(p[5], {0,0,1}, uFront, 0.0f);
     pushVert(p[6], {0,0,1}, uFront, 1.0f);
     pushVert(p[7], {0,0,1}, 0.0f, 1.0f);
 
-    // BACK (-Z)
     pushVert(p[0], {0,0,-1}, 0.0f, 0.0f);
     pushVert(p[1], {0,0,-1}, uFront, 0.0f);
     pushVert(p[2], {0,0,-1}, uFront, 1.0f);
     pushVert(p[3], {0,0,-1}, 0.0f, 1.0f);
 
-    // LEFT (-X)
     pushVert(p[0], {-1,0,0}, 0.0f, 0.0f);
     pushVert(p[3], {-1,0,0}, uSide, 0.0f);
     pushVert(p[7], {-1,0,0}, uSide, 1.0f);
     pushVert(p[4], {-1,0,0}, 0.0f, 1.0f);
 
-    // RIGHT (+X)
     pushVert(p[1], {1,0,0}, 0.0f, 0.0f);
     pushVert(p[2], {1,0,0}, uSide, 0.0f);
     pushVert(p[6], {1,0,0}, uSide, 1.0f);
     pushVert(p[5], {1,0,0}, 0.0f, 1.0f);
 
-    // TOP (+Y)
     pushVert(p[3], {0,1,0}, 0.0f,      0.0f);
     pushVert(p[2], {0,1,0}, uTopBot,   0.0f);
     pushVert(p[6], {0,1,0}, uTopBot,   1.0f);
     pushVert(p[7], {0,1,0}, 0.0f,      1.0f);
 
-    // BOTTOM (-Y)
     pushVert(p[0], {0,-1,0}, 0.0f,     0.0f);
     pushVert(p[1], {0,-1,0}, uTopBot,  0.0f);
     pushVert(p[5], {0,-1,0}, uTopBot,  1.0f);
     pushVert(p[4], {0,-1,0}, 0.0f,     1.0f);
 
-    // Indices
     for (int face = 0; face < 6; face++) {
         unsigned int o = face * 4;
         indices.insert(indices.end(),
@@ -284,43 +261,36 @@ Mesh createEndWall(float width, float height, float thickness)
     float uSide   = thickness / height;
     float uTopBot = width     / thickness;
 
-    // FRONT (+Z)
     push(p[4], {0,0,1}, 0,0);
     push(p[5], {0,0,1}, uFront,0);
     push(p[6], {0,0,1}, uFront,1);
     push(p[7], {0,0,1}, 0,1);
 
-    // BACK (-Z)
     push(p[0], {0,0,-1}, 0,0);
     push(p[1], {0,0,-1}, uFront,0);
     push(p[2], {0,0,-1}, uFront,1);
     push(p[3], {0,0,-1}, 0,1);
 
-    // LEFT (-X)
     push(p[0], {-1,0,0}, 0,0);
     push(p[3], {-1,0,0}, uSide,0);
     push(p[7], {-1,0,0}, uSide,1);
     push(p[4], {-1,0,0}, 0,1);
 
-    // RIGHT (+X)
     push(p[1], {1,0,0}, 0,0);
     push(p[2], {1,0,0}, uSide,0);
     push(p[6], {1,0,0}, uSide,1);
     push(p[5], {1,0,0}, 0,1);
 
-    // TOP (+Y)
     push(p[3], {0,1,0}, 0,0);
     push(p[2], {0,1,0}, uTopBot,0);
     push(p[6], {0,1,0}, uTopBot,1);
     push(p[7], {0,1,0}, 0,1);
 
-    // BOTTOM (-Y)
     push(p[0], {0,-1,0}, 0,0);
     push(p[1], {0,-1,0}, uTopBot,0);
     push(p[5], {0,-1,0}, uTopBot,1);
     push(p[4], {0,-1,0}, 0,1);
 
-    // Indices
     for (int face = 0; face < 6; face++) {
         unsigned int b = face * 4;
         indices.insert(indices.end(), {b, b+1, b+2, b+2, b+3, b});
@@ -363,7 +333,6 @@ Mesh createCylinder(float radius, float height, int segments)
                                         });
     };
 
-    // ---- Side surface ----
     for (int i = 0; i <= segments; i++)
     {
         float angle = (float)i / segments * glm::two_pi<float>();
@@ -391,7 +360,6 @@ Mesh createCylinder(float radius, float height, int segments)
         indices.push_back(b); indices.push_back(d); indices.push_back(c);
     }
 
-    // ---- Top cap ----
     int topCenterIndex = vertices.size() / 11;
     pushVert({0, halfH, 0}, {0,1,0}, 0.5f, 0.5f);
 
@@ -414,7 +382,6 @@ Mesh createCylinder(float radius, float height, int segments)
         indices.push_back(baseTop + i);
     }
 
-    // ---- Bottom cap ----
     int bottomCenterIndex = vertices.size() / 11;
     pushVert({0, -halfH, 0}, {0,-1,0}, 0.5f, 0.5f);
 
@@ -437,7 +404,6 @@ Mesh createCylinder(float radius, float height, int segments)
         indices.push_back(baseBottom + i + 1);
     }
 
-    // Setup VAO
     mesh.vertices = std::move(vertices);
     mesh.indices  = std::move(indices);
 
@@ -479,14 +445,12 @@ Mesh createPyramid(float baseSize, float height)
         {-s, -h2,  s}
     };
 
-    // Base quad
     push(base[0], {0,-1,0}, 0,0);
     push(base[1], {0,-1,0}, 1,0);
     push(base[2], {0,-1,0}, 1,1);
     push(base[3], {0,-1,0}, 0,1);
     indices.insert(indices.end(), {0,1,2, 2,3,0});
 
-    // Triangles
     for (int i = 0; i < 4; i++)
     {
         glm::vec3 a = base[i];
@@ -503,14 +467,14 @@ Mesh createPyramid(float baseSize, float height)
         indices.insert(indices.end(), {bi, bi+1, bi+2});
     }
 
-    GLsizei S = 11*sizeof(float);
+    GLsizei stride = 11*sizeof(float);
     mesh.vertices = std::move(vertices);
     mesh.indices  = std::move(indices);
     mesh.attributes = {
-        {0,3,GL_FLOAT,GL_FALSE,S,0},
-        {1,3,GL_FLOAT,GL_FALSE,S,3*sizeof(float)},
-        {2,2,GL_FLOAT,GL_FALSE,S,6*sizeof(float)},
-        {3,3,GL_FLOAT,GL_FALSE,S,8*sizeof(float)}
+        {0,3,GL_FLOAT,GL_FALSE,stride,0},
+        {1,3,GL_FLOAT,GL_FALSE,stride,3*sizeof(float)},
+        {2,2,GL_FLOAT,GL_FALSE,stride,6*sizeof(float)},
+        {3,3,GL_FLOAT,GL_FALSE,stride,8*sizeof(float)}
     };
     mesh.setup();
     return mesh;
@@ -535,7 +499,6 @@ Mesh createTriangularPrism(float width, float height, float depth)
     float d = depth*0.5f;
     float h2 = height * 0.5f;
 
-    // Centered
     glm::vec3 A(-w,-h2,-d);
     glm::vec3 B( w,-h2,-d);
     glm::vec3 C( 0, h2,-d);
@@ -549,14 +512,12 @@ Mesh createTriangularPrism(float width, float height, float depth)
                     {b+0,b+1,b+2,  b+2,b+3,b+0});
     };
 
-    // FRONT (ABC)
     glm::vec3 nF = glm::normalize(glm::cross(B-A,C-A));
     push(A,nF,0,0);
     push(B,nF,1,0);
     push(C,nF,0.5,1);
     inds.insert(inds.end(), {0,1,2});
 
-    // BACK (DEF)
     glm::vec3 nB = glm::normalize(glm::cross(E-D,F-D));
     unsigned int ib = verts.size()/11;
     push(D,nB,0,0);
@@ -564,7 +525,6 @@ Mesh createTriangularPrism(float width, float height, float depth)
     push(F,nB,0.5,1);
     inds.insert(inds.end(), {ib,ib+1,ib+2});
 
-    // BOTTOM (A,B,E,D)
     int ib2 = verts.size()/11;
     push(A,{0,-1,0},0,0);
     push(B,{0,-1,0},1,0);
@@ -572,7 +532,6 @@ Mesh createTriangularPrism(float width, float height, float depth)
     push(D,{0,-1,0},0,1);
     quad(ib2);
 
-    // RIGHT (B,C,F,E)
     int ib3 = verts.size()/11;
     glm::vec3 nR = glm::normalize(glm::cross(C-B,F-B));
     push(B,nR,0,0);
@@ -581,7 +540,6 @@ Mesh createTriangularPrism(float width, float height, float depth)
     push(E,nR,0,1);
     quad(ib3);
 
-    // LEFT (A,D,F,C)
     int ib4 = verts.size()/11;
     glm::vec3 nL = glm::normalize(glm::cross(D-A,F-A));
     push(A,nL,0,0);
@@ -613,15 +571,12 @@ MeshInstance createFlatBoardLocal(
     if (Nsamples < 2)
         return out;
 
-    // 1) Choose local origin
     glm::vec3 root = pathWorld.front();
 
-    // Local path
     std::vector<glm::vec3> path(Nsamples);
     for (size_t i = 0; i < Nsamples; ++i)
         path[i] = pathWorld[i] - root;
 
-    // 2) Arc-length for UVs along the track
     std::vector<float> cumLen(Nsamples);
     float totalLen = 0.0f;
     cumLen[0] = 0.0f;
@@ -631,7 +586,6 @@ MeshInstance createFlatBoardLocal(
     }
     if (totalLen < 1e-6f) totalLen = 1.0f;
 
-    // 3) Build simple frames (T, R, U) from *local* path
     std::vector<glm::vec3> tangent(Nsamples);
     std::vector<glm::vec3> right  (Nsamples);
     std::vector<glm::vec3> up     (Nsamples);
@@ -663,7 +617,6 @@ MeshInstance createFlatBoardLocal(
         up[i]      = U;
     }
 
-    // 4) Build mesh in LOCAL space (same layout as createFlatBoard)
     Mesh mesh;
     std::vector<float>        vertices;
     std::vector<unsigned int> indices;
@@ -690,95 +643,80 @@ MeshInstance createFlatBoardLocal(
 
     const unsigned int vertsPer = 16;
 
-    // SAME scaling as in createFlatBoard:
     float uScaleRail = totalLen / railingHeight;
 
     for (size_t i = 0; i < Nsamples; ++i)
     {
-        glm::vec3 center = path[i];   // LOCAL CENTER
+        glm::vec3 center = path[i];
         glm::vec3 R      = right[i];
         glm::vec3 U      = up[i];
 
         glm::vec3 leftEdge  = center - R * halfW;
         glm::vec3 rightEdge = center + R * halfW;
 
-        float vPath = cumLen[i] / totalLen;  // 0..1 along length
+        float vPath = cumLen[i] / totalLen;
 
-        // --- TOP (0,1) ---
         pushVert(leftEdge,  U, 0.0f, vPath);
         pushVert(rightEdge, U, 1.0f, vPath);
 
-        // --- RAIL FRONT (2..5) ---
         glm::vec3 leftBase  = leftEdge  - R * railingOffset;
         glm::vec3 rightBase = rightEdge + R * railingOffset;
         glm::vec3 leftTop   = leftBase  + U * railingHeight;
         glm::vec3 rightTop  = rightBase + U * railingHeight;
 
-        pushVert(leftBase,  U, vPath * uScaleRail,                      0.0f); // 2
-        pushVert(leftTop,   U, vPath * uScaleRail,                      1.0f); // 3
-        pushVert(rightBase, U, vPath * uScaleRail + (width/railingHeight), 0.0f); // 4
-        pushVert(rightTop,  U, vPath * uScaleRail + (width/railingHeight), 1.0f); // 5
+        pushVert(leftBase,  U, vPath * uScaleRail,                      0.0f);
+        pushVert(leftTop,   U, vPath * uScaleRail,                      1.0f);
+        pushVert(rightBase, U, vPath * uScaleRail + (width/railingHeight), 0.0f);
+        pushVert(rightTop,  U, vPath * uScaleRail + (width/railingHeight), 1.0f);
 
-        // --- BOTTOM (6,7) ---
         glm::vec3 leftBot  = leftEdge  - U * boardThickness;
         glm::vec3 rightBot = rightEdge - U * boardThickness;
 
-        pushVert(leftBot,  -U, 0.0f, vPath); // 6
-        pushVert(rightBot, -U, 1.0f, vPath); // 7
+        pushVert(leftBot,  -U, 0.0f, vPath);
+        pushVert(rightBot, -U, 1.0f, vPath);
 
-        // --- RAIL BACK (8..11) ---
         glm::vec3 leftBaseB  = leftBase  + R * railingThickness;
         glm::vec3 leftTopB   = leftTop   + R * railingThickness;
         glm::vec3 rightBaseB = rightBase - R * railingThickness;
         glm::vec3 rightTopB  = rightTop  - R * railingThickness;
 
-        pushVert(leftBaseB,  U, vPath * uScaleRail,                      0.0f); // 8
-        pushVert(leftTopB,   U, vPath * uScaleRail,                      1.0f); // 9
-        pushVert(rightBaseB, U, vPath * uScaleRail + (width/railingHeight), 0.0f); // 10
-        pushVert(rightTopB,  U, vPath * uScaleRail + (width/railingHeight), 1.0f); // 11
+        pushVert(leftBaseB,  U, vPath * uScaleRail,                      0.0f);
+        pushVert(leftTopB,   U, vPath * uScaleRail,                      1.0f);
+        pushVert(rightBaseB, U, vPath * uScaleRail + (width/railingHeight), 0.0f);
+        pushVert(rightTopB,  U, vPath * uScaleRail + (width/railingHeight), 1.0f);
 
-        // --- SIDE WALLS (12..15) ---
-        // *** EXACTLY as in createFlatBoard ***
-        pushVert(leftEdge,  -R, vPath * uScaleRail,                      1.0f); // 12
-        pushVert(leftBot,   -R, vPath * uScaleRail,                      0.0f); // 13
-        pushVert(rightEdge,  R, vPath * uScaleRail + (width/railingHeight), 1.0f); // 14
-        pushVert(rightBot,   R, vPath * uScaleRail + (width/railingHeight), 0.0f); // 15
+
+        pushVert(leftEdge,  -R, vPath * uScaleRail,                      1.0f);
+        pushVert(leftBot,   -R, vPath * uScaleRail,                      0.0f);
+        pushVert(rightEdge,  R, vPath * uScaleRail + (width/railingHeight), 1.0f);
+        pushVert(rightBot,   R, vPath * uScaleRail + (width/railingHeight), 0.0f);
     }
 
-    // 5) Indices (unchanged, same as createFlatBoard)
     for (size_t i = 0; i < Nsamples - 1; ++i)
     {
         unsigned int a = i * vertsPer;
         unsigned int b = (i + 1) * vertsPer;
 
-        // top
         indices.insert(indices.end(), { a+0,b+0,a+1, a+1,b+0,b+1 });
 
-        // bottom
         indices.insert(indices.end(), { a+6,b+6,a+7, a+7,b+6,b+7 });
 
-        // walls
         indices.insert(indices.end(), { a+12,a+13,b+12, b+12,a+13,b+13 });
         indices.insert(indices.end(), { a+14,b+14,a+15, a+15,b+14,b+15 });
 
-        // rail front
         indices.insert(indices.end(), { a+2,b+2,a+3, a+3,b+2,b+3 });
         indices.insert(indices.end(), { a+4,b+4,a+5, a+5,b+4,b+5 });
 
-        // rail back
         indices.insert(indices.end(), { a+8,b+8,a+9, a+9,b+8,b+9 });
         indices.insert(indices.end(), { a+10,b+10,a+11, a+11,b+10,b+11 });
 
-        // connectors (left)
         indices.insert(indices.end(), { a+2,a+8,b+2, b+2,a+8,b+8 });
         indices.insert(indices.end(), { a+3,b+3,a+9, a+9,b+3,b+9 });
 
-        // connectors (right)
         indices.insert(indices.end(), { a+4,a+10,b+4, b+4,a+10,b+10 });
         indices.insert(indices.end(), { a+5,b+5,a+11, a+11,b+5,b+11 });
     }
 
-    // 6) Upload mesh
     mesh.vertices = std::move(vertices);
     mesh.indices  = std::move(indices);
 
@@ -792,9 +730,9 @@ MeshInstance createFlatBoardLocal(
 
     mesh.setup();
 
-    // 7) Fill MeshInstance
-    out.mesh  = mesh;                          // copy is fine here
-    out.model = glm::translate(glm::mat4(1.0f), root); // place back in world
+
+    out.mesh  = mesh;
+    out.model = glm::translate(glm::mat4(1.0f), root);
 
     return out;
 }
@@ -822,54 +760,39 @@ Mesh createGuideDeflectorLocal(
 
     float L = length;
 
-    float W0 = innerWidthStart;  // narrow at top
-    float W1 = innerWidthEnd;    // wide at bottom
+    float W0 = innerWidthStart;
+    float W1 = innerWidthEnd;
     float H  = height;
 
-    //
-    // TOP SURFACE (constant height)
-    //
-    glm::vec3 A( 0, H, 0 );      // wall edge (start)
-    glm::vec3 B(-W0, H, 0 );     // inner edge narrow (start)
-    glm::vec3 C(-W1, H, L );     // inner edge wide (end)
-    glm::vec3 D( 0, H, L );      // wall edge (end)
 
-    //
-    // BOTTOM surface (optional for physics)
-    //
+    glm::vec3 A( 0, H, 0 );
+    glm::vec3 B(-W0, H, 0 );
+    glm::vec3 C(-W1, H, L );
+    glm::vec3 D( 0, H, L );
+
+
     glm::vec3 A2 = glm::vec3(A.x, 0, A.z);
     glm::vec3 B2 = glm::vec3(B.x, 0, B.z);
     glm::vec3 C2 = glm::vec3(C.x, 0, C.z);
     glm::vec3 D2 = glm::vec3(D.x, 0, D.z);
 
-    // Normal for top (faces upward)
     glm::vec3 N = glm::vec3(0,1,0);
 
-    // TOP quad
     push(A, N); push(B, N); push(C, N); push(D, N);
 
-    // BOTTOM quad
     push(A2,-N); push(B2,-N); push(C2,-N); push(D2,-N);
 
-    // Build indices
     inds = {
-        // top
         0,1,2, 0,2,3,
-        // bottom
         4,6,5, 4,7,6
     };
 
-    // Side walls (inner and outer)
-    // INNER SIDE
     inds.insert(inds.end(), { 1,5,6, 1,6,2 });
 
-    // OUTER SIDE (wall side)
     inds.insert(inds.end(), { 0,4,7, 0,7,3 });
 
-    // FRONT face
     inds.insert(inds.end(), { 0,1,5, 0,5,4 });
 
-    // BACK face
     inds.insert(inds.end(), { 3,7,6, 3,6,2 });
 
     mesh.vertices = verts;
